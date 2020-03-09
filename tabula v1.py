@@ -3,6 +3,7 @@
 
 import logging
 import os
+import random
 
 from setup import PROXY, TOKEN
 from telegram import Bot, Update
@@ -89,7 +90,15 @@ def start(update: Update, context: CallbackContext):
 def id(update: Update, context: CallbackContext):
     """Send id of user"""
     update.message.reply_text(f"Ваш id: {update.message.from_user.id} ")
+    
 
+@mylogs
+def fortune(update: Update, context: CallbackContext):
+    '''Send a random message from the list to the user'''
+    list_answers = ['Определённо', 'Не стоит', 'Ещё не время', "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", 'Не могу сказать']
+    update.message.reply_text(random.choice(list_answers))
+
+    
 @mylogs
 def history(update: Update, context: CallbackContext):
     """Send a message whe the command /history is issued."""
@@ -135,12 +144,13 @@ def remove(update: Update, context: CallbackContext):
 @mylogs
 def chat_help(update: Update, context: CallbackContext):
     """Send a message when the command /help is issued."""
-    update.message.reply_text('Список команд доступных для вас:')
-    update.message.reply_text('1. /start-Начало работы с ботом')
-    update.message.reply_text('2. /history-Вывод ваших последний сообщений')
-    update.message.reply_text('3. /remove-Отчистка ваших сообщение для бота')
-    update.message.reply_text('4. /chat-Начало анонимной переписки(В разработке :( )')
-    update.message.reply_text('5. /myid-Вывод вашего id')
+    update.message.reply_text('''Список команд доступных для вас:
+    1. /start - Начало работы с ботом
+    2. /history - Вывод ваших последний сообщений
+    3. /remove - Отчистка ваших сообщение для бота
+    4. /chat - Начало анонимной переписки (В разработке :( )
+    5. /myid - Вывод вашего id
+    6. /fortune - Шар судьбы, ответ на любой ваш вопрос''')
 
 
 
@@ -175,7 +185,8 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('history', history))
     # updater.dispatcher.add_handler(CommandHandler('chat', chat))
     updater.dispatcher.add_handler(CommandHandler('remove', remove))
-    updater.dispatcher.add_handler(CommandHandler('myid',id))
+    updater.dispatcher.add_handler(CommandHandler('myid', id))
+    updater.dispatcher.add_handler(CommandHandler('fortune', fortune))
 
     # on noncommand i.e message - echo the message on Telegram
     updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
