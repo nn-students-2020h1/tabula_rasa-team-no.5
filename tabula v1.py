@@ -96,7 +96,7 @@ def id(update: Update, context: CallbackContext):
 @mylogs
 def fortune(update: Update, context: CallbackContext):
     '''Send a random message from the list to the user'''
-    update.message.reply_text('Задумай свой вопрос...')
+    update.message.reply_text('Задумай свой вопрос... \n Твой вопрос должен быть закрытым!')
     time.sleep(1)
     update.message.reply_text('...3...')
     time.sleep(1)
