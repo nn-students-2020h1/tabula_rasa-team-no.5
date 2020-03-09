@@ -4,6 +4,7 @@
 import logging
 import os
 import random
+import time
 
 from setup import PROXY, TOKEN
 from telegram import Bot, Update
@@ -95,8 +96,16 @@ def id(update: Update, context: CallbackContext):
 @mylogs
 def fortune(update: Update, context: CallbackContext):
     '''Send a random message from the list to the user'''
-    list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", "Не могу сказать"]
-    update.message.reply_text("Ответ на твой вопрос: " + random.choice(list_answers))
+    update.message.reply_text('Задумай свой вопрос...')
+    time.sleep(1)
+    update.message.reply_text('...3...')
+    time.sleep(1)
+    update.message.reply_text('...2...')
+    time.sleep(1)
+    update.message.reply_text('...1...')
+    time.sleep(1)
+    list_answers = ['Определённо', 'Не стоит', 'Ещё не время', "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", 'Не могу сказать']
+    update.message.reply_text(f'Ответ на твой вопрос: {random.choice(list_answers)}')
 
     
 @mylogs
