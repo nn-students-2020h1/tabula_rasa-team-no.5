@@ -92,8 +92,7 @@ def history(update: Update, context: CallbackContext):
     bot_logs = "C:\\Users\\Георгий\\Documents\\GitHub\\course_chat_bot\\mylogs\\" + txt_name + ".txt"
     bot_history=open("myhistory\\"+txt_name+".txt","w")
     bot_history.close()
-    line_counter=len(open(bot_logs).readlines())
-    line_counter -= 1
+    line_counter = len(open(bot_logs).readlines()) - 1
     n = -1 - line_counter
     if line_counter == 0:
         update.message.reply_text('Вы ещё не писали мне сообщения')
@@ -108,7 +107,7 @@ def history(update: Update, context: CallbackContext):
         update.message.reply_text(f'Ваши последние 5 сообщений')
     with open(bot_logs, 'r') as input_file:
         lines_cache = islice(input_file, line_counter - n, line_counter)
-        n=1
+        n = 1
         for curent_line in lines_cache:
             dic = eval(curent_line[0:-1])
             vivod = str(n) + '. ' + dic['message']
@@ -134,11 +133,11 @@ def remove(update: Update, context: CallbackContext):
 @mylogs
 def chat_help(update: Update, context: CallbackContext):
     """Send a message when the command /help is issued."""
-    update.message.reply_text('Список команд доступных для вас:')
-    update.message.reply_text('1. /start-Начало работы с ботом')
-    update.message.reply_text('2. /history-Вывод ваших последний сообщений')
-    update.message.reply_text('3. /remove-Отчистка ваших сообщение для бота')
-    update.message.reply_text('4. /chat-Начало анонимной переписки(не работает :(')
+    update.message.reply_text('''Список команд доступных для вас:
+    1. /start-Начало работы с ботом
+    2. /history-Вывод ваших последний сообщений
+    3. /remove-Отчистка ваших сообщение для бота
+    4. /chat-Начало анонимной переписки(не работает :(''')
 
 
 
