@@ -89,13 +89,13 @@ def start(update: Update, context: CallbackContext):
 @mylogs
 def history(update: Update, context: CallbackContext):
     """Send a message whe the command /history is issued."""
+    history_list=[]
     bot_logs = "C:\\Users\\Георгий\\Documents\\GitHub\\course_chat_bot\\mylogs\\" + txt_name + ".txt"
-    bot_history=open("myhistory\\"+txt_name+".txt","w")
-    bot_history.close()
-    line_counter = len(open(bot_logs).readlines()) - 1
-    n = -1 - line_counter
+    line_counter=len(open(bot_logs).readlines())
+    line_counter -= 1
     if line_counter == 0:
         update.message.reply_text('Вы ещё не писали мне сообщения')
+        n = -1 - line_counter
     elif line_counter == 1:
         n = 1
         update.message.reply_text('Ваше последнее сообщение')
@@ -107,18 +107,16 @@ def history(update: Update, context: CallbackContext):
         update.message.reply_text(f'Ваши последние 5 сообщений')
     with open(bot_logs, 'r') as input_file:
         lines_cache = islice(input_file, line_counter - n, line_counter)
-        n = 1
+        n=1
         for curent_line in lines_cache:
-            dic = eval(curent_line[0:-1])
-            vivod = str(n) + '. ' + dic['message']
+            log_dict = eval(curent_line[0:-1])
+            output = str(n) + '. ' + log_dict['message']
+            update.message.reply_text(output)
+            history_list.append(f'Action: {n}\nUser: {txt_name}\nFunction: {log_dict["function"]}\nMessage: {log_dict["message"]}\nTime: {log_dict["time"]}\n\n')
             n += 1
-            update.message.reply_text(vivod)
-            with open("myhistory\\"+txt_name+".txt","a") as input_file:
-                input_file.write('User: '+txt_name+"\n")
-                input_file.write('Function: '+dic["function"]+"\n")
-                input_file.write("Message: "+dic['message']+"\n\n")
-
-
+        with open("myhistory\\"+txt_name+".txt","w") as input_file:
+            for i in range(n-1):
+                input_file.write(history_list[i])
 
 
 def remove(update: Update, context: CallbackContext):
