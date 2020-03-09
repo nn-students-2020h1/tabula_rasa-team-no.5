@@ -84,7 +84,11 @@ def myerrors(func):
 def start(update: Update, context: CallbackContext):
     """Send a message when the command /start is issued."""
     update.message.reply_text(f'Привет, {update.effective_user.first_name}!')
-
+    
+@mylogs
+def id(update: Update, context: CallbackContext):
+    """Send id of user"""
+    update.message.reply_text(f"Ваш id: {update.message.from_user.id} ")
 
 @mylogs
 def history(update: Update, context: CallbackContext):
@@ -131,11 +135,12 @@ def remove(update: Update, context: CallbackContext):
 @mylogs
 def chat_help(update: Update, context: CallbackContext):
     """Send a message when the command /help is issued."""
-    update.message.reply_text('''Список команд доступных для вас:
-    1. /start-Начало работы с ботом
-    2. /history-Вывод ваших последний сообщений
-    3. /remove-Отчистка ваших сообщение для бота
-    4. /chat-Начало анонимной переписки(не работает :(''')
+    update.message.reply_text('Список команд доступных для вас:')
+    update.message.reply_text('1. /start-Начало работы с ботом')
+    update.message.reply_text('2. /history-Вывод ваших последний сообщений')
+    update.message.reply_text('3. /remove-Отчистка ваших сообщение для бота')
+    update.message.reply_text('4. /chat-Начало анонимной переписки(В разработке :( )')
+    update.message.reply_text('5. /myid-Вывод вашего id')
 
 
 
@@ -170,6 +175,7 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('history', history))
     # updater.dispatcher.add_handler(CommandHandler('chat', chat))
     updater.dispatcher.add_handler(CommandHandler('remove', remove))
+    updater.dispatcher.add_handler(CommandHandler('myid',id))
 
     # on noncommand i.e message - echo the message on Telegram
     updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
