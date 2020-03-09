@@ -120,20 +120,20 @@ def history(update: Update, context: CallbackContext):
         n = -1 - line_counter
     elif line_counter == 1:
         n = 1
-        update.message.reply_text('Ваше последнее сообщение')
-    elif line_counter < 6:
+        text = 'Ваше последнее сообщение\n'
+    elif line_counter < 5:
         n = line_counter
-        update.message.reply_text(f'Ваши последние {n} сообщения')
+        text = f'Ваши последние {n} сообщения\n'
     else:
         n = 5
-        update.message.reply_text(f'Ваши последние 5 сообщений')
+        text = f'Ваши последние 5 сообщений\n'
     with open(bot_logs, 'r') as input_file:
         lines_cache = islice(input_file, line_counter - n, line_counter)
         n=1
         for curent_line in lines_cache:
             log_dict = eval(curent_line[0:-1])
             output = str(n) + '. ' + log_dict['message']
-            update.message.reply_text(output)
+            update.message.reply_text(text + output)
             history_list.append(f'Action: {n}\nUser: {txt_name}\nFunction: {log_dict["function"]}\nMessage: {log_dict["message"]}\nTime: {log_dict["time"]}\n\n')
             n += 1
         with open("myhistory\\"+txt_name+".txt","w") as input_file:
