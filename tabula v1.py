@@ -96,7 +96,7 @@ def id(update: Update, context: CallbackContext):
 def fortune(update: Update, context: CallbackContext):
     '''Send a random message from the list to the user'''
     list_answers = ['Определённо', 'Не стоит', 'Ещё не время', "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", 'Не могу сказать']
-    update.message.reply_text(random.choice(list_answers))
+    update.message.reply_text("Ответ на твой вопрос: " + random.choice(list_answers))
 
     
 @mylogs
