@@ -6,11 +6,12 @@ import os
 import random
 import time
 import requests
+import csv
 
 from setup import PROXY, TOKEN
 from telegram import Bot, Update
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from itertools import islice
 
 # Enable logging
@@ -61,25 +62,6 @@ def myerrors(func):
 # Define a few command handlers. These usually take the two arguments update and
 # context. Error handlers also receive the raised TelegramError object in error.
 
-"""В разработке"""
-
-
-# @mylogs
-# @myerrors
-# def chat(update: Update, context: CallbackContext):
-#     """Anonymous chat"""
-#     global numberofusers
-#     print(sad)
-#     number = numberofusers
-#     update.message.reply_text("Вы зашли в анонимный чат")
-#     update.message.reply_text(f"В данный момент есть {number} человек готовых с вами общаться")
-#
-#     update.message.reply_text('Вы хотите начать общение?(да/нет)')
-#
-#     if update.message.text == ('да'):
-#         update.message.reply_text(update.message.text)
-#         number += 1
-#         numberofusers = number
 
 
 @mylogs
@@ -130,7 +112,35 @@ def random_fact(update: Update, context: CallbackContext):
     random_fact = facts_dictionary['all'][user]['text']
     update.message.reply_text(random_fact)
 
+@mylogs
+def corono_stats(update: Update, context: CallbackContext):
+    i=0
 
+    while True:
+        dat = (date.today() - timedelta(days=i)).strftime("%m-%d-%Y")
+        r = requests.get(
+            f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{dat}.csv')
+        if r.status_code==200:
+            break
+        i+=1
+    text = (f'5 провинций с наибольшим числом заражённых ({dat}):\n')
+    while True:
+        i = 1
+        try:
+            with open(f'corono_stats/{dat}.csv', 'r') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row['Province/State'] != '':
+                        text+=(f'Province: {row["Province/State"]} | Country: {row["Country/Region"]} | Confirmed: {row["Confirmed"]}\n')
+                        if i == 5:
+                            update.message.reply_text(text)
+                            break
+                        i += 1
+            break
+        except:
+            with open(f'corono_stats/{dat}.csv', 'w') as file:
+                file.write(r.text)
+    
 
 @mylogs
 def history(update: Update, context: CallbackContext):
@@ -180,11 +190,11 @@ def chat_help(update: Update, context: CallbackContext):
     1. /start - Начало работы с ботом
     2. /history - Вывод ваших последний сообщений
     3. /remove - Отчистка ваших сообщение для бота
-    4. /chat - Начало анонимной переписки (В разработке :( )
-    5. /myid - Вывод вашего id
-    6. /fortune - Шар судьбы, ответ на любой ваш вопрос
-    7. /fact - Самый популярный факт с сайта cat-fact
-    8. /randomfact - Рандомный факт с сайта cat-fact''')
+    4. /myid - Вывод вашего id
+    5. /fortune - Шар судьбы, ответ на любой ваш вопрос
+    6. /fact - Самый популярный факт с сайта cat-fact
+    7. /randomfact - Рандомный факт с сайта cat-fact
+    8. /corono_stats-Актуальная(или почти) информация о 5 провинциях с наибольших количетсвом заражённых''')
 
 
 @mylogs
@@ -220,6 +230,7 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('fortune', fortune))
     updater.dispatcher.add_handler(CommandHandler('fact', fact))
     updater.dispatcher.add_handler(CommandHandler('randomfact', random_fact))
+    updater.dispatcher.add_handler(CommandHandler('corono_stats', corono_stats))
 
     # on noncommand i.e message - echo the message on Telegram
     updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
