@@ -35,7 +35,7 @@ def mylogs(func):
                 'message': update.message.text,
                 'time': datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S"),
             })
-        with open("C:\\Users\\Георгий\\Documents\\GitHub\\course_chat_bot\\mylogs\\" + txt_name + '.txt', 'a') as bot_logs:
+        with open("mylogs\\" + txt_name + '.txt', 'a') as bot_logs:
             bot_logs.write(str(loglist) + '\n')
 
         return func(*args, **kwargs)
@@ -51,9 +51,7 @@ def myerrors(func):
             logger = logging.getLogger()
             print(logger)
             logger.warning()
-            logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG,
-                                filename=u'\\myError\\test.txt')
-
+            logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG, filename=u'\\myError\\test.txt')
         return
 
     return inner
@@ -61,7 +59,6 @@ def myerrors(func):
 
 # Define a few command handlers. These usually take the two arguments update and
 # context. Error handlers also receive the raised TelegramError object in error.
-
 
 
 @mylogs
@@ -87,8 +84,7 @@ def fortune(update: Update, context: CallbackContext):
     time.sleep(1)
     update.message.reply_text('...1...')
     time.sleep(1)
-    list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет",
-                    'Не могу сказать']
+    list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", 'Не могу сказать']
     update.message.reply_text(f'Ответ на твой вопрос: {random.choice(list_answers)}')
 
 
@@ -112,41 +108,57 @@ def random_fact(update: Update, context: CallbackContext):
     random_fact = facts_dictionary['all'][user]['text']
     update.message.reply_text(random_fact)
 
+
 @mylogs
 def corono_stats(update: Update, context: CallbackContext):
-    i=0
+    i = 0
 
     while True:
         dat = (date.today() - timedelta(days=i)).strftime("%m-%d-%Y")
-        r = requests.get(
-            f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{dat}.csv')
-        if r.status_code==200:
+        r = requests.get(f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{dat}.csv')
+        if r.status_code == 200:
             break
-        i+=1
-    text = (f'5 провинций с наибольшим числом заражённых ({dat}):\n')
+        i += 1
+
+    list_confirmed = []
+    dict_country_confirmed = {}
+
     while True:
-        i = 1
         try:
-            with open(f'corono_stats/{dat}.csv', 'r') as file:
+            with open(f'corono_stats/{dat}.csv', 'r', encoding = 'utf-8') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
-                    if row['Province/State'] != '':
-                        text+=(f'Province: {row["Province/State"]} | Country: {row["Country/Region"]} | Confirmed: {row["Confirmed"]}\n')
-                        if i == 5:
-                            update.message.reply_text(text)
-                            break
-                        i += 1
+                    if row['Active'] != '0':
+                        if row["Province_State"] != '':
+                            dict_country_confirmed[f'Провинция/Регион: {row["Province_State"]} | Страна: {row["Country_Region"]}'] = int(row['Active'])
+                        else:
+                            dict_country_confirmed[f'Страна: {row["Country_Region"]}'] = int(row['Active'])
+                        list_confirmed.append(int(row['Active']))
+                list_confirmed.sort(reverse=True)
             break
         except:
-            with open(f'corono_stats/{dat}.csv', 'w') as file:
+            with open(f'corono_stats/{dat}.csv', 'w', encoding = 'utf-8') as file:
                 file.write(r.text)
-    
+
+    ind = 0
+    if len(list_confirmed) >= 5:
+        ind = 5
+    else:
+        ind = len(list_confirmed)
+    text = f'{ind} провинций с наибольшим числом заражённых ({dat}):\n'
+    for char in list_confirmed[:ind]:
+        for key, value in dict_country_confirmed.items():
+            if value == char:
+                text += f'  {key} | Случаев заражения: {value}\n'
+    update.message.reply_text(text)
+
+
 
 @mylogs
 def history(update: Update, context: CallbackContext):
     """Send a message whe the command /history is issued."""
     history_list = []
-    bot_logs = "C:\\Users\\Георгий\\Documents\\GitHub\\course_chat_bot\\mylogs\\" + txt_name + ".txt"
+    bot_logs = "mylogs\\" + txt_name + ".txt"
     line_counter = len(open(bot_logs).readlines())
     line_counter -= 1
     if line_counter == 0:
@@ -178,7 +190,7 @@ def history(update: Update, context: CallbackContext):
 
 def remove(update: Update, context: CallbackContext):
     """clear logs"""
-    bot_logs = "C:\\Users\\Георгий\\Documents\\GitHub\\course_chat_bot\\mylogs\\" + txt_name + ".txt"
+    bot_logs = "mylogs\\" + txt_name + ".txt"
     os.remove(bot_logs)
     update.message.reply_text('Ваши сообщения удалены')
 
@@ -194,7 +206,7 @@ def chat_help(update: Update, context: CallbackContext):
     5. /fortune - Шар судьбы, ответ на любой ваш вопрос
     6. /fact - Самый популярный факт с сайта cat-fact
     7. /randomfact - Рандомный факт с сайта cat-fact
-    8. /corono_stats-Актуальная(или почти) информация о 5 провинциях с наибольших количетсвом заражённых''')
+    8. /corono_stats - Актуальная (или почти) информация о 5 странах с наибольших количетсвом заражённых коронавирусом''')
 
 
 @mylogs
