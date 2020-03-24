@@ -52,7 +52,6 @@ def myerrors(func):
             print(logger)
             logger.warning()
             logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG, filename=u'\\myError\\test.txt')
-
         return
 
     return inner
@@ -152,6 +151,7 @@ def corono_stats(update: Update, context: CallbackContext):
             if value == char:
                 text += f'  {key} | Случаев заражения: {value}\n'
     update.message.reply_text(text)
+
 
 
 @mylogs
