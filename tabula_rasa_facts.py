@@ -178,14 +178,15 @@ def history(update: Update, context: CallbackContext):
         n = 1
         for curent_line in lines_cache:
             log_dict = eval(curent_line[0:-1])
-            output = str(n) + '. ' + log_dict['message']
-            update.message.reply_text(text + output)
+            output = str(n) + '. ' + log_dict['message']+'\n'
+            text+=output
             history_list.append(
                 f'Action: {n}\nUser: {txt_name}\nFunction: {log_dict["function"]}\nMessage: {log_dict["message"]}\nTime: {log_dict["time"]}\n\n')
             n += 1
         with open("myhistory\\" + txt_name + ".txt", "w") as input_file:
             for i in range(n - 1):
                 input_file.write(history_list[i])
+        update.message.reply_text(text)
 
 
 def remove(update: Update, context: CallbackContext):
@@ -236,7 +237,6 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CommandHandler('help', chat_help))
     updater.dispatcher.add_handler(CommandHandler('history', history))
-    # updater.dispatcher.add_handler(CommandHandler('chat', chat))
     updater.dispatcher.add_handler(CommandHandler('remove', remove))
     updater.dispatcher.add_handler(CommandHandler('myid', id))
     updater.dispatcher.add_handler(CommandHandler('fortune', fortune))
