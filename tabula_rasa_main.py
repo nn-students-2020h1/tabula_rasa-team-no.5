@@ -77,15 +77,33 @@ def id(update: Update, context: CallbackContext):
 def fortune(update: Update, context: CallbackContext):
     '''Send a random message from the list to the user'''
     update.message.reply_text('Задумай свой вопрос... \n Твой вопрос должен быть закрытым!')
-    time.sleep(1)
-    update.message.reply_text('...3...')
-    time.sleep(1)
-    update.message.reply_text('...2...')
-    time.sleep(1)
-    update.message.reply_text('...1...')
-    time.sleep(1)
+    for i in [3, 2, 1]:
+        update.message.reply_text(f"...{i}...")
+        time.sleep(1)
     list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", 'Не могу сказать']
     update.message.reply_text(f'Ответ на твой вопрос: {random.choice(list_answers)}')
+
+@mylogs
+def breakfast(update: Update, context: CallbackContext):
+    update.message.reply_text(
+        'Известно, что хороший завтрак является залогом успешного для.\nДавай узнаем, какой завтрак принесет тебе удачу сегодня?')
+    list_names = ["Парфе", "Фриттата", "Фруктовый смузи", "Запеченные яблоки", "Роскошные бутерброды"]
+    ingredients = {"Парфе": "- печение \n- сгущенка \n- сливки 33%\n- лимон", "Фриттата": "- яйца\n- картофель\n- лук",
+                   "Фруктовый смузи": "- банан\n- молоко/кефир/йогурт\n- любимый фрукт",
+                   "Запеченные яблоки": "- яблоки\n- сливочное масло\n- орехи\n- изюм\n- сахар/мёд",
+                   "Роскошные бутерброды": "- хлеб\n- авокадо\n- яйцо (опционально)\n- помидор\n- зелень (шпинат/руккола/петрушка)\n- лимон"}
+    recipes = {"Парфе": "https://www.youtube.com/watch?v=_7sku8rOZQk",
+               "Фриттата": "https://www.youtube.com/watch?v=8ed-1VXYORU",
+               "Фруктовый смузи": "https://www.youtube.com/watch?v=FdLb_saOct4",
+               "Запеченные яблоки": "https://www.youtube.com/watch?v=rxyE85xdoRY",
+               "Роскошные бутерброды": "https://www.youtube.com/watch?v=SB3VdgW_-R0"}
+    random_one = random.choice(list_names)
+    update.message.reply_text(f'Кажется, твой завтрак удачи на сегодня - это...')
+    for i in [3, 2, 1]:
+        update.message.reply_text(f"...{i}...")
+        time.sleep(1)
+    update.message.reply_text(f'...{random_one.lower()}!')
+    update.message.reply_text(f'Для приготовления такого блюда как {random_one.lower()} тебе понадобятся:\n{ingredients[random_one]}.\nПодробный рецепт можно найти здесь: {recipes[random_one]}! \nУдачи!')
 
 
 @mylogs
@@ -207,7 +225,8 @@ def chat_help(update: Update, context: CallbackContext):
     5. /fortune - Шар судьбы, ответ на любой ваш вопрос
     6. /fact - Самый популярный факт с сайта cat-fact
     7. /randomfact - Рандомный факт с сайта cat-fact
-    8. /corono_stats - Актуальная (или почти) информация о 5 странах с наибольших количетсвом заражённых коронавирусом''')
+    8. /corono_stats - Актуальная (или почти) информация о 5 странах с наибольших количетсвом заражённых коронавирусом
+    9. /breakfast - Подсказка, что приготовить на завтрак сегодня''')
 
 
 @mylogs
@@ -243,6 +262,7 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('fact', fact))
     updater.dispatcher.add_handler(CommandHandler('randomfact', random_fact))
     updater.dispatcher.add_handler(CommandHandler('corono_stats', corono_stats))
+    updater.dispatcher.add_handler(CommandHandler('breakfast', breakfast))
 
     # on noncommand i.e message - echo the message on Telegram
     updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
