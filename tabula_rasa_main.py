@@ -221,6 +221,38 @@ def error(update: Update, context: CallbackContext):
     """Log Errors caused by Updates."""
     logger.warning(f'Update {update} caused error {context.error}')
 
+              
+class AnalyseCSV:
+    def __init__(self, reader):
+        self.reader = reader #  reader = csv.DictReader(file)
+
+    def count_all(self, parametr):
+        file.seek(0)
+        sum_par = 0
+        for row in self.reader:
+            sum_par += float(row[parametr])
+        return sum_par
+
+    def top_n(self, parametr, n):
+        file.seek(0)
+        list_par = []
+        for row in self.reader:
+            if not row[parametr].isdigit():
+                continue
+            list_par.append(float(row[parametr]))
+        list_par.sort(reverse=True)
+        top = list_par[:n]
+        return top
+
+    def dictionary_of_two(self, key, value):
+        file.seek(0)
+        dict_two_parametrs = {}
+        for row in reader:
+            if not row[value].isdigit():
+                continue
+            dict_two_parametrs[row[key]] = row[value]
+        return dict_two_parametrs
+              
 
 def main():
     bot = Bot(
