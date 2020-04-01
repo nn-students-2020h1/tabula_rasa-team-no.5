@@ -78,8 +78,9 @@ def fortune(update: Update, context: CallbackContext):
     '''Send a random message from the list to the user'''
     update.message.reply_text('Задумай свой вопрос... \n Твой вопрос должен быть закрытым!')
     for i in [3, 2, 1]:
-        update.message.reply_text(f"...{i}...")
         time.sleep(1)
+        update.message.reply_text(f'...{i}...')
+    time.sleep(1)
     list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", 'Не могу сказать']
     update.message.reply_text(f'Ответ на твой вопрос: {random.choice(list_answers)}')
 
