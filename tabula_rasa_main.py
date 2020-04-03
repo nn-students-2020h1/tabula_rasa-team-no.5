@@ -84,6 +84,7 @@ def fortune(update: Update, context: CallbackContext):
     list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", 'Не могу сказать']
     update.message.reply_text(f'Ответ на твой вопрос: {random.choice(list_answers)}')
 
+    
 @mylogs
 def breakfast(update: Update, context: CallbackContext):
     update.message.reply_text(
@@ -128,49 +129,74 @@ def random_fact(update: Update, context: CallbackContext):
     update.message.reply_text(random_fact)
 
 
+class AnalyseCSV:
+    def __init__(self, reader, file_name):
+        self.reader = reader  # reader = csv.DictReader(file)
+        self.file = file_name
+
+    def count_all(self, parametr):
+        self.file.seek(0)
+        sum_par = 0
+        for row in self.reader:
+            sum_par += float(row[parametr])
+        return sum_par
+
+    def top_n(self, parametr, n):
+        self.file.seek(0)
+        list_par = []
+        for row in self.reader:
+            if not row[parametr].isdigit():
+                continue
+            list_par.append(int(row[parametr]))
+        list_par.sort(reverse=True)
+        top = list_par[:n]
+        return top
+
+    def top_covid(self):
+        self.file.seek(0)
+        list_par = []
+        for row in self.reader:
+            if not row['Active'].isdigit():
+                continue
+            list_par.append({'Country': row['Country_Region'], 'Active': int(row['Active'])})
+        list_par.sort(key=lambda d: d['Active'], reverse=True)
+        top = list_par[:5]
+        return top
+
+    def dictionary_of_two(self, key, value):
+        self.file.seek(0)
+        dict_two_parametrs = {}
+        for row in reader:
+            if not row[value].isdigit():
+                continue
+            dict_two_parametrs[row[key]] = row[value]
+        return dict_two_parametrs
+
+
 @mylogs
 def corono_stats(update: Update, context: CallbackContext):
     i = 0
 
     while True:
         dat = (date.today() - timedelta(days=i)).strftime("%m-%d-%Y")
-        r = requests.get(f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{dat}.csv')
+        r = requests.get(
+            f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{dat}.csv')
         if r.status_code == 200:
             break
         i += 1
-
-    list_confirmed = []
-    dict_country_confirmed = {}
-
+    text = f'5 провинций с наибольшим числом заражённых ({dat.replace("-",".")})\n'
     while True:
         try:
-            with open(f'corono_stats/{dat}.csv', 'r', encoding = 'utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    if row['Active'] != '0':
-                        if row["Province_State"] != '':
-                            dict_country_confirmed[f'Провинция/Регион: {row["Province_State"]} | Страна: {row["Country_Region"]}'] = int(row['Active'])
-                        else:
-                            dict_country_confirmed[f'Страна: {row["Country_Region"]}'] = int(row['Active'])
-                        list_confirmed.append(int(row['Active']))
-                list_confirmed.sort(reverse=True)
+            with open(f'corono_stats/{dat}.csv', 'r', encoding='utf-8') as file:
+                b = AnalyseCSV(csv.DictReader(file))
+                for str in b.top_covid():
+                    text += f'Страна: {str["Country"]} | Число зареженных: {str["Active"]}\n'
+                update.message.reply_text(text1)
+
             break
         except:
-            with open(f'corono_stats/{dat}.csv', 'w', encoding = 'utf-8') as file:
+            with open(f'corono_stats/{dat}.csv', 'w', encoding='utf-8') as file:
                 file.write(r.text)
-
-    ind = 0
-    if len(list_confirmed) >= 5:
-        ind = 5
-    else:
-        ind = len(list_confirmed)
-    text = f'{ind} провинций с наибольшим числом заражённых ({dat}):\n'
-    for char in list_confirmed[:ind]:
-        for key, value in dict_country_confirmed.items():
-            if value == char:
-                text += f'  {key} | Случаев заражения: {value}\n'
-    update.message.reply_text(text)
-
 
 
 @mylogs
@@ -197,8 +223,8 @@ def history(update: Update, context: CallbackContext):
         n = 1
         for curent_line in lines_cache:
             log_dict = eval(curent_line[0:-1])
-            output = str(n) + '. ' + log_dict['message']+'\n'
-            text+=output
+            output = str(n) + '. ' + log_dict['message'] + '\n'
+            text += output
             history_list.append(
                 f'Action: {n}\nUser: {txt_name}\nFunction: {log_dict["function"]}\nMessage: {log_dict["message"]}\nTime: {log_dict["time"]}\n\n')
             n += 1
@@ -241,38 +267,6 @@ def error(update: Update, context: CallbackContext):
     """Log Errors caused by Updates."""
     logger.warning(f'Update {update} caused error {context.error}')
 
-              
-class AnalyseCSV:
-    def __init__(self, reader):
-        self.reader = reader #  reader = csv.DictReader(file)
-
-    def count_all(self, parametr):
-        file.seek(0)
-        sum_par = 0
-        for row in self.reader:
-            sum_par += float(row[parametr])
-        return sum_par
-
-    def top_n(self, parametr, n):
-        file.seek(0)
-        list_par = []
-        for row in self.reader:
-            if not row[parametr].isdigit():
-                continue
-            list_par.append(float(row[parametr]))
-        list_par.sort(reverse=True)
-        top = list_par[:n]
-        return top
-
-    def dictionary_of_two(self, key, value):
-        file.seek(0)
-        dict_two_parametrs = {}
-        for row in reader:
-            if not row[value].isdigit():
-                continue
-            dict_two_parametrs[row[key]] = row[value]
-        return dict_two_parametrs
-              
 
 def main():
     bot = Bot(
