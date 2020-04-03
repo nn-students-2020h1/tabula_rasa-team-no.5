@@ -144,7 +144,7 @@ class AnalyseCSV:
         return sum_par
 
     def top_n(self, parametr, n):
-        # self.reader.seek(0)
+        self.reader.seek(0)
         list_par = []
         for row in self.reader:
             if not row[parametr].isdigit():
