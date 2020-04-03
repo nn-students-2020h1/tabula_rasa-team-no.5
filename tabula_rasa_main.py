@@ -137,14 +137,14 @@ class AnalyseCSV:
         self.reader = reader  # reader = csv.DictReader(file)
 
     def count_all(self, parametr):
-        # file.seek(0)
+        file.seek(0)
         sum_par = 0
         for row in self.reader:
             sum_par += float(row[parametr])
         return sum_par
 
     def top_n(self, parametr, n):
-        self.reader.seek(0)
+        reader.seek(0)
         list_par = []
         for row in self.reader:
             if not row[parametr].isdigit():
