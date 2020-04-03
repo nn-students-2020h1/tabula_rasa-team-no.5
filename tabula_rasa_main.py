@@ -51,8 +51,7 @@ def myerrors(func):
             logger = logging.getLogger()
             print(logger)
             logger.warning()
-            logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG,
-                                filename=u'\\myError\\test.txt')
+            logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG, filename=u'\\myError\\test.txt')
         return
 
     return inner
@@ -82,11 +81,10 @@ def fortune(update: Update, context: CallbackContext):
         time.sleep(1)
         update.message.reply_text(f'...{i}...')
     time.sleep(1)
-    list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет",
-                    'Не могу сказать']
+    list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", 'Не могу сказать']
     update.message.reply_text(f'Ответ на твой вопрос: {random.choice(list_answers)}')
 
-
+    
 @mylogs
 def breakfast(update: Update, context: CallbackContext):
     update.message.reply_text(
@@ -107,8 +105,7 @@ def breakfast(update: Update, context: CallbackContext):
         update.message.reply_text(f"...{i}...")
         time.sleep(1)
     update.message.reply_text(f'...{random_one.lower()}!')
-    update.message.reply_text(
-        f'Для приготовления такого блюда как {random_one.lower()} тебе понадобятся:\n{ingredients[random_one]}.\nПодробный рецепт можно найти здесь: {recipes[random_one]}! \nУдачи!')
+    update.message.reply_text(f'Для приготовления такого блюда как {random_one.lower()} тебе понадобятся:\n{ingredients[random_one]}.\nПодробный рецепт можно найти здесь: {recipes[random_one]}! \nУдачи!')
 
 
 @mylogs
@@ -133,18 +130,19 @@ def random_fact(update: Update, context: CallbackContext):
 
 
 class AnalyseCSV:
-    def __init__(self, reader):
+    def __init__(self, reader, file_name):
         self.reader = reader  # reader = csv.DictReader(file)
+        self.file = file_name
 
     def count_all(self, parametr):
-        file.seek(0)
+        self.file.seek(0)
         sum_par = 0
         for row in self.reader:
             sum_par += float(row[parametr])
         return sum_par
 
     def top_n(self, parametr, n):
-        reader.seek(0)
+        self.file.seek(0)
         list_par = []
         for row in self.reader:
             if not row[parametr].isdigit():
@@ -155,6 +153,7 @@ class AnalyseCSV:
         return top
 
     def top_covid(self):
+        self.file.seek(0)
         list_par = []
         for row in self.reader:
             if not row['Active'].isdigit():
@@ -165,7 +164,7 @@ class AnalyseCSV:
         return top
 
     def dictionary_of_two(self, key, value):
-        file.seek(0)
+        self.file.seek(0)
         dict_two_parametrs = {}
         for row in reader:
             if not row[value].isdigit():
@@ -185,13 +184,13 @@ def corono_stats(update: Update, context: CallbackContext):
         if r.status_code == 200:
             break
         i += 1
-    text1 = f'5 провинций с наибольшим числом заражённых ({dat.replace("-",".")})\n'
+    text = f'5 провинций с наибольшим числом заражённых ({dat.replace("-",".")})\n'
     while True:
         try:
             with open(f'corono_stats/{dat}.csv', 'r', encoding='utf-8') as file:
                 b = AnalyseCSV(csv.DictReader(file))
                 for str in b.top_covid():
-                    text1+=f'Страна: {str["Country"]} | Число зареженных: {str["Active"]}\n'
+                    text += f'Страна: {str["Country"]} | Число зареженных: {str["Active"]}\n'
                 update.message.reply_text(text1)
 
             break
