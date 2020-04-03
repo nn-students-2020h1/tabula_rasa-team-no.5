@@ -51,7 +51,8 @@ def myerrors(func):
             logger = logging.getLogger()
             print(logger)
             logger.warning()
-            logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG, filename=u'\\myError\\test.txt')
+            logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG,
+                                filename=u'\\myError\\test.txt')
         return
 
     return inner
@@ -77,15 +78,37 @@ def id(update: Update, context: CallbackContext):
 def fortune(update: Update, context: CallbackContext):
     '''Send a random message from the list to the user'''
     update.message.reply_text('Задумай свой вопрос... \n Твой вопрос должен быть закрытым!')
+    for i in [3, 2, 1]:
+        time.sleep(1)
+        update.message.reply_text(f'...{i}...')
     time.sleep(1)
-    update.message.reply_text('...3...')
-    time.sleep(1)
-    update.message.reply_text('...2...')
-    time.sleep(1)
-    update.message.reply_text('...1...')
-    time.sleep(1)
-    list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", 'Не могу сказать']
+    list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет",
+                    'Не могу сказать']
     update.message.reply_text(f'Ответ на твой вопрос: {random.choice(list_answers)}')
+
+
+@mylogs
+def breakfast(update: Update, context: CallbackContext):
+    update.message.reply_text(
+        'Известно, что хороший завтрак является залогом успешного для.\nДавай узнаем, какой завтрак принесет тебе удачу сегодня?')
+    list_names = ["Парфе", "Фриттата", "Фруктовый смузи", "Запеченные яблоки", "Роскошные бутерброды"]
+    ingredients = {"Парфе": "- печение \n- сгущенка \n- сливки 33%\n- лимон", "Фриттата": "- яйца\n- картофель\n- лук",
+                   "Фруктовый смузи": "- банан\n- молоко/кефир/йогурт\n- любимый фрукт",
+                   "Запеченные яблоки": "- яблоки\n- сливочное масло\n- орехи\n- изюм\n- сахар/мёд",
+                   "Роскошные бутерброды": "- хлеб\n- авокадо\n- яйцо (опционально)\n- помидор\n- зелень (шпинат/руккола/петрушка)\n- лимон"}
+    recipes = {"Парфе": "https://www.youtube.com/watch?v=_7sku8rOZQk",
+               "Фриттата": "https://www.youtube.com/watch?v=8ed-1VXYORU",
+               "Фруктовый смузи": "https://www.youtube.com/watch?v=FdLb_saOct4",
+               "Запеченные яблоки": "https://www.youtube.com/watch?v=rxyE85xdoRY",
+               "Роскошные бутерброды": "https://www.youtube.com/watch?v=SB3VdgW_-R0"}
+    random_one = random.choice(list_names)
+    update.message.reply_text(f'Кажется, твой завтрак удачи на сегодня - это...')
+    for i in [3, 2, 1]:
+        update.message.reply_text(f"...{i}...")
+        time.sleep(1)
+    update.message.reply_text(f'...{random_one.lower()}!')
+    update.message.reply_text(
+        f'Для приготовления такого блюда как {random_one.lower()} тебе понадобятся:\n{ingredients[random_one]}.\nПодробный рецепт можно найти здесь: {recipes[random_one]}! \nУдачи!')
 
 
 @mylogs
@@ -109,49 +132,72 @@ def random_fact(update: Update, context: CallbackContext):
     update.message.reply_text(random_fact)
 
 
+class AnalyseCSV:
+    def __init__(self, reader):
+        self.reader = reader  # reader = csv.DictReader(file)
+
+    def count_all(self, parametr):
+        # file.seek(0)
+        sum_par = 0
+        for row in self.reader:
+            sum_par += float(row[parametr])
+        return sum_par
+
+    def top_n(self, parametr, n):
+        # self.reader.seek(0)
+        list_par = []
+        for row in self.reader:
+            if not row[parametr].isdigit():
+                continue
+            list_par.append(int(row[parametr]))
+        list_par.sort(reverse=True)
+        top = list_par[:n]
+        return top
+
+    def top_covid(self):
+        list_par = []
+        for row in self.reader:
+            if not row['Active'].isdigit():
+                continue
+            list_par.append({'Country': row['Country_Region'], 'Active': int(row['Active'])})
+        list_par.sort(key=lambda d: d['Active'], reverse=True)
+        top = list_par[:5]
+        return top
+
+    def dictionary_of_two(self, key, value):
+        file.seek(0)
+        dict_two_parametrs = {}
+        for row in reader:
+            if not row[value].isdigit():
+                continue
+            dict_two_parametrs[row[key]] = row[value]
+        return dict_two_parametrs
+
+
 @mylogs
 def corono_stats(update: Update, context: CallbackContext):
     i = 0
 
     while True:
         dat = (date.today() - timedelta(days=i)).strftime("%m-%d-%Y")
-        r = requests.get(f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{dat}.csv')
+        r = requests.get(
+            f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{dat}.csv')
         if r.status_code == 200:
             break
         i += 1
-
-    list_confirmed = []
-    dict_country_confirmed = {}
-
+    text1 = f'5 провинций с наибольшим числом заражённых ({dat.replace("-",".")})\n'
     while True:
         try:
-            with open(f'corono_stats/{dat}.csv', 'r', encoding = 'utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    if row['Active'] != '0':
-                        if row["Province_State"] != '':
-                            dict_country_confirmed[f'Провинция/Регион: {row["Province_State"]} | Страна: {row["Country_Region"]}'] = int(row['Active'])
-                        else:
-                            dict_country_confirmed[f'Страна: {row["Country_Region"]}'] = int(row['Active'])
-                        list_confirmed.append(int(row['Active']))
-                list_confirmed.sort(reverse=True)
+            with open(f'corono_stats/{dat}.csv', 'r', encoding='utf-8') as file:
+                b = AnalyseCSV(csv.DictReader(file))
+                for str in b.top_covid():
+                    text1+=f'Страна: {str["Country"]} | Число зареженных: {str["Active"]}\n'
+                update.message.reply_text(text1)
+
             break
         except:
-            with open(f'corono_stats/{dat}.csv', 'w', encoding = 'utf-8') as file:
+            with open(f'corono_stats/{dat}.csv', 'w', encoding='utf-8') as file:
                 file.write(r.text)
-
-    ind = 0
-    if len(list_confirmed) >= 5:
-        ind = 5
-    else:
-        ind = len(list_confirmed)
-    text = f'{ind} провинций с наибольшим числом заражённых ({dat}):\n'
-    for char in list_confirmed[:ind]:
-        for key, value in dict_country_confirmed.items():
-            if value == char:
-                text += f'  {key} | Случаев заражения: {value}\n'
-    update.message.reply_text(text)
-
 
 
 @mylogs
@@ -178,8 +224,8 @@ def history(update: Update, context: CallbackContext):
         n = 1
         for curent_line in lines_cache:
             log_dict = eval(curent_line[0:-1])
-            output = str(n) + '. ' + log_dict['message']+'\n'
-            text+=output
+            output = str(n) + '. ' + log_dict['message'] + '\n'
+            text += output
             history_list.append(
                 f'Action: {n}\nUser: {txt_name}\nFunction: {log_dict["function"]}\nMessage: {log_dict["message"]}\nTime: {log_dict["time"]}\n\n')
             n += 1
@@ -207,7 +253,8 @@ def chat_help(update: Update, context: CallbackContext):
     5. /fortune - Шар судьбы, ответ на любой ваш вопрос
     6. /fact - Самый популярный факт с сайта cat-fact
     7. /randomfact - Рандомный факт с сайта cat-fact
-    8. /corono_stats - Актуальная (или почти) информация о 5 странах с наибольших количетсвом заражённых коронавирусом''')
+    8. /corono_stats - Актуальная (или почти) информация о 5 странах с наибольших количетсвом заражённых коронавирусом
+    9. /breakfast - Подсказка, что приготовить на завтрак сегодня''')
 
 
 @mylogs
@@ -243,6 +290,7 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('fact', fact))
     updater.dispatcher.add_handler(CommandHandler('randomfact', random_fact))
     updater.dispatcher.add_handler(CommandHandler('corono_stats', corono_stats))
+    updater.dispatcher.add_handler(CommandHandler('breakfast', breakfast))
 
     # on noncommand i.e message - echo the message on Telegram
     updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
