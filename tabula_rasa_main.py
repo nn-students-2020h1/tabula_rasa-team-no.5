@@ -22,6 +22,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 loglist = []
+TODAY=(date.today() - timedelta(days=1)).strftime("%d.%m.%Y")
 
 
 def mylogs(func):
@@ -184,8 +185,6 @@ class AnalyseCSV:
             if not row[parametr].isdigit():
                 continue
             list_par.append({'Country': row['Country_Region'], 'Parametr': int(row[parametr])})
-
-            # list_par.append({'Country': row['Country_Region'], 'Active': int(row['Active']), 'Recovered':int(row['Recovered']), 'Deaths':int(row['Deaths'])})
         list_par.sort(key=lambda d: d['Parametr'], reverse=True)
         if n != -1:
             top = list_par[:n]
@@ -202,9 +201,9 @@ class AnalyseCSV:
         return dict_two_parametrs
 
     @staticmethod
-    def rabotai_pls(parametr):
+    def compare_days(parametr):
         today, rt = use_covid_request()
-        yesterday, ry = use_covid_request(3)
+        yesterday, ry = use_covid_request(2)
         curent = use_covid_file(today, rt, parametr)
         prevision = use_covid_file(yesterday, ry, parametr)
         new = []
@@ -216,9 +215,9 @@ class AnalyseCSV:
 
 @mylogs
 def corona_world_dynamic(update: Update, context: CallbackContext):
-    new_active = AnalyseCSV.rabotai_pls('Active')
-    new_death = AnalyseCSV.rabotai_pls('Deaths')
-    new_recovered = AnalyseCSV.rabotai_pls('Recovered')
+    new_active = AnalyseCSV.compare_days('Active')
+    new_death = AnalyseCSV.compare_days('Deaths')
+    new_recovered = AnalyseCSV.compare_days('Recovered')
     text = 'Мировая статистика за прошедшие сутки:\n'
 
     sum = 0
@@ -238,36 +237,20 @@ def corona_world_dynamic(update: Update, context: CallbackContext):
 
 @mylogs
 def corona_stats_dynamic(update: Update, context: CallbackContext):
-    new_active = AnalyseCSV.rabotai_pls('Active')
+    new_active = AnalyseCSV.compare_days('Active')
     new_active.sort(key=lambda d: d['Parametr'], reverse=True)
-    text = f'5 провинций с наибольшим числом новых заражённых \n'
-    #######################################################({(today).replace("-", ".")})
+    text = f'5 провинций с наибольшим числом новых заражённых ({TODAY})\n'
     for i in range(5):
         text += "Страна: {} | Количество новых зараженных {} \n".format(new_active[i]['Country'],
                                                                         new_active[i]['Parametr'])
     update.message.reply_text(text)
 
-    '''Было изначально'''
-    #
-    # today,rt=use_covid_request()
-    # yesterday,ry=use_covid_request(2)
-    # text = f'5 провинций с наибольшим числом новых заражённых ({today.replace("-", ".")})\n'
-    # curent=use_covid_file(today,rt)
-    # prevision=use_covid_file(yesterday,ry)
-    # new_active = []
-    # for i in range(len(prevision)):
-    #     new_active.append({'Country': prevision[i]['Country'], 'New_Active': curent[i]['Active'] - prevision[i]['Active']})
-    # new_active.sort(key=lambda d: d['New_Active'], reverse=True)
-    # for i in range(5):
-    #     text+="Страна: {} | Количество новых зараженных {} \n".format(new_active[i]['Country'], new_active[i]['New_Active'])
-    # update.message.reply_text(text)
-
 
 @mylogs
 def corono_stats(update: Update, context: CallbackContext):
     data, r = use_covid_request()
-    text = f'5 провинций с наибольшим числом заражённых ({data.replace("-", ".")})\n'
     corona_active = use_covid_file(data, r, 'Active')
+    text = f'5 провинций с наибольшим числом заражённых ({TODAY})\n'
     for str in corona_active[:5]:
         text += f'Страна: {str["Country"]} | Число зараженных: {str["Parametr"]}\n'
     update.message.reply_text(text)
