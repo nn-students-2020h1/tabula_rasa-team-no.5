@@ -8,6 +8,7 @@ import time
 import requests
 import csv
 
+from operator import sub
 from setup import PROXY, TOKEN
 from telegram import Bot, Update
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
@@ -21,6 +22,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 loglist = []
+TODAY=(date.today() - timedelta(days=1)).strftime("%d.%m.%Y")
 
 
 def mylogs(func):
@@ -51,10 +53,35 @@ def myerrors(func):
             logger = logging.getLogger()
             print(logger)
             logger.warning()
-            logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG, filename=u'\\myError\\test.txt')
+            logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG,
+                                filename=u'\\myError\\test.txt')
         return
 
     return inner
+
+
+def use_covid_file(data, r, parametr):
+    while True:
+        try:
+            with open(f'corono_stats/{data}.csv', 'r', encoding='utf-8') as file:
+                corona_active_curent = AnalyseCSV(csv.DictReader(file))
+                curent = corona_active_curent.top_covid(parametr, -1)
+                break
+        except:
+            with open(f'corono_stats/{data}.csv', 'w', encoding='utf-8') as file:
+                file.write(r.text)
+    return curent
+
+
+def use_covid_request(i=0):
+    while True:
+        data = (date.today() - timedelta(days=i)).strftime("%m-%d-%Y")
+        r = requests.get(
+            f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{data}.csv')
+        if r.status_code == 200:
+            break
+        i += 1
+    return data, r
 
 
 # Define a few command handlers. These usually take the two arguments update and
@@ -64,7 +91,8 @@ def myerrors(func):
 @mylogs
 def start(update: Update, context: CallbackContext):
     """Send a message when the command /start is issued."""
-    update.message.reply_text(f'Привет, {update.effective_user.first_name}!')
+    update.message.reply_text(
+        f'Привет, {update.effective_user.first_name}!\nВведи команду /help, чтобы узнать что я умею.')
 
 
 @mylogs
@@ -81,10 +109,11 @@ def fortune(update: Update, context: CallbackContext):
         time.sleep(1)
         update.message.reply_text(f'...{i}...')
     time.sleep(1)
-    list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет", 'Не могу сказать']
+    list_answers = ["Определённо", "Не стоит", "Ещё не время", "Рискуй", "Возможно", "Думаю да", "Духи говорят нет",
+                    'Не могу сказать']
     update.message.reply_text(f'Ответ на твой вопрос: {random.choice(list_answers)}')
 
-    
+
 @mylogs
 def breakfast(update: Update, context: CallbackContext):
     update.message.reply_text(
@@ -105,7 +134,8 @@ def breakfast(update: Update, context: CallbackContext):
         update.message.reply_text(f"...{i}...")
         time.sleep(1)
     update.message.reply_text(f'...{random_one.lower()}!')
-    update.message.reply_text(f'Для приготовления такого блюда как {random_one.lower()} тебе понадобятся:\n{ingredients[random_one]}.\nПодробный рецепт можно найти здесь: {recipes[random_one]}! \nУдачи!')
+    update.message.reply_text(
+        f'Для приготовления такого блюда как {random_one.lower()} тебе понадобятся:\n{ingredients[random_one]}.\nПодробный рецепт можно найти здесь: {recipes[random_one]}! \nУдачи!')
 
 
 @mylogs
@@ -130,19 +160,16 @@ def random_fact(update: Update, context: CallbackContext):
 
 
 class AnalyseCSV:
-    def __init__(self, reader, file_name):
+    def __init__(self, reader):
         self.reader = reader  # reader = csv.DictReader(file)
-        self.file = file_name
 
     def count_all(self, parametr):
-        self.file.seek(0)
         sum_par = 0
         for row in self.reader:
             sum_par += float(row[parametr])
         return sum_par
 
     def top_n(self, parametr, n):
-        self.file.seek(0)
         list_par = []
         for row in self.reader:
             if not row[parametr].isdigit():
@@ -152,51 +179,81 @@ class AnalyseCSV:
         top = list_par[:n]
         return top
 
-    def top_covid(self):
-        self.file.seek(0)
+    def top_covid(self, parametr='Active', n=5):
         list_par = []
         for row in self.reader:
-            if not row['Active'].isdigit():
+            if not row[parametr].isdigit():
                 continue
-            list_par.append({'Country': row['Country_Region'], 'Active': int(row['Active'])})
-        list_par.sort(key=lambda d: d['Active'], reverse=True)
-        top = list_par[:5]
+            list_par.append({'Country': row['Country_Region'], 'Parametr': int(row[parametr])})
+        list_par.sort(key=lambda d: d['Parametr'], reverse=True)
+        if n != -1:
+            top = list_par[:n]
+        else:
+            top = list_par
         return top
 
     def dictionary_of_two(self, key, value):
-        self.file.seek(0)
         dict_two_parametrs = {}
-        for row in reader:
+        for row in self.reader:
             if not row[value].isdigit():
                 continue
             dict_two_parametrs[row[key]] = row[value]
         return dict_two_parametrs
 
+    @staticmethod
+    def compare_days(parametr):
+        today, rt = use_covid_request()
+        yesterday, ry = use_covid_request(2)
+        curent = use_covid_file(today, rt, parametr)
+        prevision = use_covid_file(yesterday, ry, parametr)
+        new = []
+        for i in range(len(prevision)):
+            new.append(
+                {'Country': prevision[i]['Country'], 'Parametr': curent[i]['Parametr'] - prevision[i]['Parametr']})
+        return new
+
+
+@mylogs
+def corona_world_dynamic(update: Update, context: CallbackContext):
+    new_active = AnalyseCSV.compare_days('Active')
+    new_death = AnalyseCSV.compare_days('Deaths')
+    new_recovered = AnalyseCSV.compare_days('Recovered')
+    text = 'Мировая статистика за прошедшие сутки:\n'
+
+    sum = 0
+    for i in new_active:
+        sum += i['Parametr']
+    text += 'Новых заражённых: {}\n'.format(sum)
+    sum = 0
+    for i in new_death:
+        sum += i['Parametr']
+    text += 'Умерло: {}\n'.format(sum)
+    sum = 0
+    for i in new_recovered:
+        sum += i['Parametr']
+    text += 'Выздоровело: {}\n'.format(sum)
+    update.message.reply_text(text)
+
+
+@mylogs
+def corona_stats_dynamic(update: Update, context: CallbackContext):
+    new_active = AnalyseCSV.compare_days('Active')
+    new_active.sort(key=lambda d: d['Parametr'], reverse=True)
+    text = f'5 провинций с наибольшим числом новых заражённых ({TODAY})\n'
+    for i in range(5):
+        text += "Страна: {} | Количество новых зараженных {} \n".format(new_active[i]['Country'],
+                                                                        new_active[i]['Parametr'])
+    update.message.reply_text(text)
+
 
 @mylogs
 def corono_stats(update: Update, context: CallbackContext):
-    i = 0
-
-    while True:
-        dat = (date.today() - timedelta(days=i)).strftime("%m-%d-%Y")
-        r = requests.get(
-            f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{dat}.csv')
-        if r.status_code == 200:
-            break
-        i += 1
-    text = f'5 провинций с наибольшим числом заражённых ({dat.replace("-",".")})\n'
-    while True:
-        try:
-            with open(f'corono_stats/{dat}.csv', 'r', encoding='utf-8') as file:
-                b = AnalyseCSV(csv.DictReader(file))
-                for str in b.top_covid():
-                    text += f'Страна: {str["Country"]} | Число зареженных: {str["Active"]}\n'
-                update.message.reply_text(text1)
-
-            break
-        except:
-            with open(f'corono_stats/{dat}.csv', 'w', encoding='utf-8') as file:
-                file.write(r.text)
+    data, r = use_covid_request()
+    corona_active = use_covid_file(data, r, 'Active')
+    text = f'5 провинций с наибольшим числом заражённых ({TODAY})\n'
+    for str in corona_active[:5]:
+        text += f'Страна: {str["Country"]} | Число зараженных: {str["Parametr"]}\n'
+    update.message.reply_text(text)
 
 
 @mylogs
@@ -253,7 +310,9 @@ def chat_help(update: Update, context: CallbackContext):
     6. /fact - Самый популярный факт с сайта cat-fact
     7. /randomfact - Рандомный факт с сайта cat-fact
     8. /corono_stats - Актуальная (или почти) информация о 5 странах с наибольших количетсвом заражённых коронавирусом
-    9. /breakfast - Подсказка, что приготовить на завтрак сегодня''')
+    9. /breakfast - Подсказка, что приготовить на завтрак сегодня
+    10. /corona_stats_dynamic - Наибольшее число новых зараженных
+    11. /corona_world_stats_dynamic - Мировая статистика за прошедшие сутки''')
 
 
 @mylogs
@@ -290,6 +349,8 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('randomfact', random_fact))
     updater.dispatcher.add_handler(CommandHandler('corono_stats', corono_stats))
     updater.dispatcher.add_handler(CommandHandler('breakfast', breakfast))
+    updater.dispatcher.add_handler(CommandHandler('corona_stats_dynamic', corona_stats_dynamic))
+    updater.dispatcher.add_handler(CommandHandler('corona_world_stats_dynamic', corona_world_dynamic))
 
     # on noncommand i.e message - echo the message on Telegram
     updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
