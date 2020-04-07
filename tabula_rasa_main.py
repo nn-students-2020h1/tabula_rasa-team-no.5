@@ -22,7 +22,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 loglist = []
-TODAY=(date.today() - timedelta(days=1)).strftime("%d.%m.%Y")
+TODAY = (date.today() - timedelta(days=1)).strftime("%d.%m.%Y")
 
 
 def mylogs(func):
@@ -60,17 +60,18 @@ def myerrors(func):
     return inner
 
 
-def use_covid_file(data, r, parametr):
+def use_covid_file(data, r, parametr='none'):
     while True:
         try:
             with open(f'corono_stats/{data}.csv', 'r', encoding='utf-8') as file:
-                corona_active_curent = AnalyseCSV(csv.DictReader(file))
-                curent = corona_active_curent.top_covid(parametr, -1)
-                break
+                if parametr != 'none':
+                    corona_active_curent = AnalyseCSV(csv.DictReader(file))
+                    curent = corona_active_curent.top_covid(parametr, -1)
+                    return curent
+                return data
         except:
             with open(f'corono_stats/{data}.csv', 'w', encoding='utf-8') as file:
                 file.write(r.text)
-    return curent
 
 
 def use_covid_request(i=0):
@@ -212,6 +213,39 @@ class AnalyseCSV:
                 {'Country': prevision[i]['Country'], 'Parametr': curent[i]['Parametr'] - prevision[i]['Parametr']})
         return new
 
+    @staticmethod
+    def country_info(country):
+        today, rt = use_covid_request()
+        Active = int(0)
+        Deaths = int(0)
+        Recovered = int(0)
+        file = (use_covid_file(today, rt))
+        with open(f'corono_stats/{file}.csv', 'r', encoding='utf-8') as reader:
+            for row in csv.DictReader(reader):
+                if row['Admin2'] == 'unassigned':
+                    break
+                if row['Country_Region'] == country:
+                    Active += int(row['Active'])
+                    Deaths += int(row['Deaths'])
+                    Recovered += int(row['Recovered'])
+
+        return Active, Deaths, Recovered
+
+
+@mylogs
+def corona_country(update: Update, context: CallbackContext):
+    country = update.message.text[(update.message.text.find('/corona_country') + 16):]
+    if country == '':
+        update.message.reply_text('Я не знаю такой страны')
+        return
+    Active, Deaths, Recovered = AnalyseCSV.country_info(country)
+    if Active == -1:
+        update.message.reply_text('Я не знаю такой страны')
+    else:
+        text = 'Данные о стране {}:\nКоличество заражённых: {}\nКоличество Умерших: {}\nКоличество выздоровевших: {}'.format(
+            country, Active, Deaths, Recovered)
+        update.message.reply_text(text)
+
 
 @mylogs
 def corona_world_dynamic(update: Update, context: CallbackContext):
@@ -312,7 +346,8 @@ def chat_help(update: Update, context: CallbackContext):
     8. /corono_stats - Актуальная (или почти) информация о 5 странах с наибольших количетсвом заражённых коронавирусом
     9. /breakfast - Подсказка, что приготовить на завтрак сегодня
     10. /corona_stats_dynamic - Наибольшее число новых зараженных
-    11. /corona_world_stats_dynamic - Мировая статистика за прошедшие сутки''')
+    11. /corona_world_stats_dynamic - Мировая статистика за прошедшие сутки
+    12. /corona_country <Country> - Информация о короновирусе в стране''')
 
 
 @mylogs
@@ -351,6 +386,7 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('breakfast', breakfast))
     updater.dispatcher.add_handler(CommandHandler('corona_stats_dynamic', corona_stats_dynamic))
     updater.dispatcher.add_handler(CommandHandler('corona_world_stats_dynamic', corona_world_dynamic))
+    updater.dispatcher.add_handler(CommandHandler('corona_country', corona_country))
 
     # on noncommand i.e message - echo the message on Telegram
     updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
