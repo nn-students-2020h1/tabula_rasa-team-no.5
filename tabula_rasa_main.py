@@ -217,15 +217,12 @@ class AnalyseCSV:
     def country_info(country, i=0):
         data, rt = use_covid_request(i)
 
-        Active = int(0)
-        Deaths = int(0)
-        Recovered = int(0)
+        Active = 0
+        Deaths = 0
+        Recovered = 0
         file = (use_covid_file(data, rt))
         with open(f'corono_stats/{file}.csv', 'r', encoding='utf-8') as reader:
             for row in csv.DictReader(reader):
-                if row['Admin2'] == 'unassigned':
-                    break
-                    return 0, 0, 0
                 if row['Country_Region'] == country:
                     Active += int(row['Active'])
                     Deaths += int(row['Deaths'])
@@ -370,12 +367,12 @@ def chat_help(update: Update, context: CallbackContext):
     5. /fortune - Шар судьбы, ответ на любой ваш вопрос
     6. /fact - Самый популярный факт с сайта cat-fact
     7. /randomfact - Рандомный факт с сайта cat-fact
-    8. /corono_stats - Актуальная (или почти) информация о 5 странах с наибольших количетсвом заражённых коронавирусом
-    9. /breakfast - Подсказка, что приготовить на завтрак сегодня
+    8. /breakfast - Подсказка, что приготовить на завтрак сегодня
+    9. /corono_stats - Актуальная (или почти) информация о 5 странах с наибольших количетсвом заражённых коронавирусом
     10. /corona_stats_dynamic - Наибольшее число новых зараженных
     11. /corona_world_stats_dynamic - Мировая статистика за прошедшие сутки
     12. /corona_country <Country> - Информация о короновирусе в стране
-    13. /country_dynamic <Country> - Динамика распространения короновируса в стране''')
+    13. /country_dynamic <Country> - Динамика короновируса в стране''')
 
 
 @mylogs
