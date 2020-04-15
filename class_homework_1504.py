@@ -19,8 +19,6 @@ class Rectangle:
     def is_square(self):
         if self.l == self.h:
             return True
-        else:
-            return None
 
 
     def horizontal(self):
