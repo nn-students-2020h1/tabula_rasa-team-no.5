@@ -2,7 +2,7 @@ import unittest
 from unittest import mock
 from unittest.mock import patch
 
-from tabula_rasa_main import history
+from tabula_rasa_main import history, remove
 
 LOG_VALUES_3 = [{'message': 'test message1',},
               {'message': 'test message2',},
@@ -20,29 +20,29 @@ LOG_VALUE_MORE = [{'message': 'test message1',},
 class TestHistory(unittest.TestCase):
     def setUp(self) -> None:
         self.update = mock.MagicMock()
-        self.update.message.from_user.id = 123456789
-        self.update.effective_user.first_name = 'your name'
+        self.update.message.from_user.id = 1055175070
+        self.update.effective_user.first_name = 'Name'
         self.update.message.text = 'test_mes'
         self.CallbackContext = ''
 
+    def tearDown(self) -> None:
+        file = open('myhistory\\1055175070_Name.txt', 'w')
+        file.close()
 
     def test_no_history(self):
-        with open('myhistory\\123456789_your name.txt', 'w') as f:
-            f.write('')
-            reply_text = history(self.update, self.CallbackContext)
-
+        reply_text = history(self.update, self.CallbackContext)
         self.assertEqual(reply_text, 'Вы ещё не писали мне сообщения')
 
 
     def test_one_message(self):
-        with open('myhistory\\123456789_your name.txt', 'w') as f:
+        with open('myhistory\\1055175070_Name.txt', 'w') as f:
             f.write("[{'message': 'test message only'}]")
         reply_text = history(self.update, self.CallbackContext)
         self.assertEqual(reply_text, 'Ваше последнее сообщение\n1. test message only')
 
 
     def test_history(self):
-        with open('myhistory\\123456789_your name.txt', 'w') as f:
+        with open('myhistory\\1055175070_Name.txt', 'w') as f:
             for c in LOG_VALUES_3:
                 f.write(str(c)+'\n')
         reply_text = history(self.update, self.CallbackContext)
@@ -50,7 +50,7 @@ class TestHistory(unittest.TestCase):
 
 
     def test_history_more(self):
-        with open('myhistory\\123456789_your name.txt', 'w') as f:
+        with open('myhistory\\1055175070_Name.txt', 'w') as f:
             for c in LOG_VALUE_MORE:
                 f.write(str(c)+'\n')
         reply_text = history(self.update, self.CallbackContext)
