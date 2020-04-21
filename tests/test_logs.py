@@ -11,17 +11,18 @@ def simple_action(update):
 class TestsLogs(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.update = mock.MagicMock()
-
-    def tearDown(self) -> None:
         global loglist
         loglist = []
-
-    def test_log_action(self):
+        self.update = mock.MagicMock()
         self.update.message.text = 'bla-bla'
         self.update.effective_user.first_name = 'Julia'
-        self.update.message.from_user.id = 1055174973
+        self.update.message.from_user.id = 1055175070
 
+
+    def test_log_action(self):
+        self.update.effective_user.first_name = 'Julia'
+        self.update.message.from_user.id = 1055175070
+        self.update.message.text = 'bla-bla'
         simple_action(self.update)
         self.assertEqual(loglist, [{'user': 'Julia', 'function': 'simple_action', 'message': 'bla-bla', 'time': datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")}])
 
