@@ -301,6 +301,7 @@ def history(update: Update, context: CallbackContext):
     line_counter = len(open(bot_logs).readlines())
     line_counter -= 1
     if line_counter == 0:
+        text = 'Вы ещё не писали мне сообщения'
         update.message.reply_text('Вы ещё не писали мне сообщения')
         n = -1 - line_counter
     elif line_counter == 1:
