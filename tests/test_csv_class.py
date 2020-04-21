@@ -74,7 +74,7 @@ class TestCorona(unittest.TestCase):
 
     def test_covid_file_exists(self):
         curent = tabula_rasa_main.use_covid_file('01-01-97', 'http://qqq.com', 'Active')
-        self.assertEqual(curent, [{'Country': 'Russia', 'Parametr': '5'}, {'Country': 'USA', 'Parametr': '7'}, {'Country': 'Germany', 'Parametr': '15'}])
+        self.assertEqual(curent, [{'Country': 'Russia', 'Parametr': 5}, {'Country': 'USA', 'Parametr': 7}, {'Country': 'Germany', 'Parametr': 15}])
 
 
     def test_use_covid__request_data(self):
