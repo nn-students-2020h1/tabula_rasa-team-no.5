@@ -293,41 +293,40 @@ def corono_stats(update: Update, context: CallbackContext):
     return text
 
 
-@mylogs
 def history(update: Update, context: CallbackContext):
     """Send a message whe the command /history is issued."""
+    txt_name = str(update.message.from_user.id) + '_' + str(update.effective_user.first_name)
     history_list = []
     bot_logs = "mylogs\\" + txt_name + ".txt"
-    line_counter = len(open(bot_logs).readlines())
-    line_counter -= 1
-    if line_counter == 0:
-        text = 'Вы ещё не писали мне сообщения'
-        update.message.reply_text('Вы ещё не писали мне сообщения')
-        n = -1 - line_counter
-    elif line_counter == 1:
-        n = 1
-        text = 'Ваше последнее сообщение\n'
-    elif line_counter < 5:
-        n = line_counter
-        text = f'Ваши последние {n} сообщения\n'
-    else:
-        n = 5
-        text = f'Ваши последние 5 сообщений\n'
     with open(bot_logs, 'r') as input_file:
+        line_counter = len(input_file.readlines())
+        if line_counter == 0:
+            update.message.reply_text('Вы ещё не писали мне сообщения')
+            text = 'Вы ещё не писали мне сообщения'
+            n = -1
+        elif line_counter == 1:
+            n = 1
+            text = 'Ваше последнее сообщение\n'
+        elif line_counter < 5:
+            n = line_counter
+            text = f'Ваши последние {n} сообщения:\n'
+        else:
+            n = 5
+            text = f'Ваши последние 5 сообщений:\n'
+        input_file.seek(0)
         lines_cache = islice(input_file, line_counter - n, line_counter)
         n = 1
         for curent_line in lines_cache:
-            log_dict = eval(curent_line[0:-1])
+            log_out = eval(curent_line[::])
+            if type(log_out) == dict:
+                log_dict = log_out.copy()
+            else:
+                log_dict = log_out[0]
             output = str(n) + '. ' + log_dict['message'] + '\n'
             text += output
-            history_list.append(
-                f'Action: {n}\nUser: {txt_name}\nFunction: {log_dict["function"]}\nMessage: {log_dict["message"]}\nTime: {log_dict["time"]}\n\n')
             n += 1
-        with open("myhistory\\" + txt_name + ".txt", "w") as input_file:
-            for i in range(n - 1):
-                input_file.write(history_list[i])
         update.message.reply_text(text)
-        return text
+    return text
 
 
 def remove(update: Update, context: CallbackContext):
