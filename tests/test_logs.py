@@ -13,8 +13,8 @@ class TestsLogs(unittest.TestCase):
     def setUp(self) -> None:
         self.update = mock.MagicMock()
         self.update.message.text = 'bla-bla'
-        self.update.effective_user.first_name = 'Julia'
-        self.update.message.from_user.id = 1055175070
+        self.update.effective_user.first_name = 'your name'
+        self.update.message.from_user.id = 123456789
 
     def tearDown(self) -> None:
         global loglist
