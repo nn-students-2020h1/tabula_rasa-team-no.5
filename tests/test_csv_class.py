@@ -2,10 +2,10 @@ import unittest
 from unittest import mock
 from unittest.mock import patch
 import csv
-from datetime import datetime, date, timedelta
-import os
+from datetime import date, timedelta
 
 import tabula_rasa_main
+from tabula_rasa_main import loglist
 
 
 reader = [{'Country_Region': 'Country_Region', 'Active': 'Active', 'Deaths': 'Deaths', 'Recovered': 'Recovered'},
@@ -40,6 +40,10 @@ class TestAnalyser(unittest.TestCase):
     def setUp(self):
         self.analyser = tabula_rasa_main.AnalyseCSV(reader)
 
+    def tearDown(self) -> None:
+        global loglist
+        loglist = []
+          
     def test_count_all(self):
         number = self.analyser.count_all('Active')
         self.assertEqual(number, 27.0)
@@ -68,9 +72,9 @@ class TestCorona(unittest.TestCase):
         self.CallbackContext = ''
         self.analyser = tabula_rasa_main.AnalyseCSV(reader)
 
-    #def tearDown(self):
-        #if os.path.exists('corono_stats\\03-01-97.csv'):
-            #os.remove('corono_stats\\03-01-97.csv')
+    def tearDown(self) -> None:
+        global loglist
+        loglist = []
 
     def test_covid_file_exists(self):
         curent = tabula_rasa_main.use_covid_file('01-01-97', 'http://qqq.com', 'Active')
