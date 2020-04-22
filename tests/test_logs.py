@@ -20,11 +20,10 @@ class TestsLogs(unittest.TestCase):
         global loglist
         loglist = []
 
-    def test_no_message_attr(self):
-        self.update = mock.MagicMock(spec=['effective_user'])
-
-        simple_action(self.update)
-        self.assertEqual(loglist, [])
+    #def test_no_message_attr(self):
+        #self.update = mock.MagicMock(spec=['effective_user'])
+        #simple_action(self.update)
+        #self.assertEqual(loglist, [])
 
     def test_no_user_attr(self):
         self.update = mock.MagicMock(spec=['message'])
