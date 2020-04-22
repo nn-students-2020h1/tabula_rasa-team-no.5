@@ -20,13 +20,6 @@ class TestsLogs(unittest.TestCase):
         global loglist
         loglist = []
 
-    def test_log_action(self):
-        self.update.effective_user.first_name = 'Julia'
-        self.update.message.from_user.id = 1055175070
-        self.update.message.text = 'bla-bla'
-        simple_action(self.update)
-        self.assertEqual(loglist, [{'user': 'Julia', 'function': 'simple_action', 'message': 'bla-bla', 'time': datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")}])
-
     def test_no_message_attr(self):
         self.update = mock.MagicMock(spec=['effective_user'])
 
