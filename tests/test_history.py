@@ -15,7 +15,7 @@ LOG_VALUE_MORE = [{'message': 'test message1',},
                   {'message': 'test message3',},
                   {'message': 'test message4'},
                   {'message': 'test message5'},
-                  {'message': 'test_message6'}]
+                  {'message': 'test message6'}]
 
 class TestHistory(unittest.TestCase):
     def setUp(self) -> None:
@@ -26,7 +26,7 @@ class TestHistory(unittest.TestCase):
         self.CallbackContext = ''
 
     def tearDown(self) -> None:
-        file = open('myhistory\\1055175070_Name.txt', 'w')
+        file = open('mylogs\\1055175070_Name.txt', 'w')
         file.close()
 
     def test_no_history(self):
@@ -35,14 +35,14 @@ class TestHistory(unittest.TestCase):
 
 
     def test_one_message(self):
-        with open('myhistory\\1055175070_Name.txt', 'w') as f:
+        with open('mylogs\\1055175070_Name.txt', 'w') as f:
             f.write("[{'message': 'test message only'}]")
         reply_text = history(self.update, self.CallbackContext)
-        self.assertEqual(reply_text, 'Ваше последнее сообщение\n1. test message only')
+        self.assertEqual(reply_text, 'Ваше последнее сообщение\n1. test message only\n')
 
 
     def test_history(self):
-        with open('myhistory\\1055175070_Name.txt', 'w') as f:
+        with open('mylogs\\1055175070_Name.txt', 'w') as f:
             for c in LOG_VALUES_3:
                 f.write(str(c)+'\n')
         reply_text = history(self.update, self.CallbackContext)
@@ -50,12 +50,12 @@ class TestHistory(unittest.TestCase):
 
 
     def test_history_more(self):
-        with open('myhistory\\1055175070_Name.txt', 'w') as f:
+        with open('mylogs\\1055175070_Name.txt', 'w') as f:
             for c in LOG_VALUE_MORE:
                 f.write(str(c)+'\n')
         reply_text = history(self.update, self.CallbackContext)
         self.assertEqual(reply_text,
-                         'Ваши последние 5 сообщений:\n1. test message2\n2. test message3\n3. test message4\n4. test message5\n5. test message6')
+                         'Ваши последние 5 сообщений:\n1. test message2\n2. test message3\n3. test message4\n4. test message5\n5. test message6\n')
 
 
 if __name__ == '__main__':
