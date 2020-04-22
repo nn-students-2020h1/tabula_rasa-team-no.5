@@ -7,7 +7,7 @@ from io import StringIO
 
 
 import tabula_rasa_main
-from tabula_rasa_main import get_data_from_site
+from tabula_rasa_main import get_data_from_site, loglist
 
 
 class TestFunctions(unittest.TestCase):
@@ -19,6 +19,10 @@ class TestFunctions(unittest.TestCase):
         self.update.message.text = 'bla-bla'
         self.CallbackContext = ''
 
+    def tearDown(self) -> None:
+        global loglist
+        loglist = []
+    
     def test_start(self):
         self.assertEqual(tabula_rasa_main.start(self.update, self.CallbackContext), 'Привет, your name!\nВведи команду /help, чтобы узнать что я умею.')
 
@@ -81,7 +85,11 @@ class TestsFacts(unittest.TestCase):
         self.update.message.from_user.id = 123456789
         self.update.effective_user.first_name = 'your name'
         self.CallbackContext = ''
-
+        
+    def tearDown(self) -> None:
+        global loglist
+        loglist = []
+        
     def test_bad_request(self):
         with patch('tabula_rasa_main.requests.get') as mock_get:
             mock_get.return_value.ok = False
