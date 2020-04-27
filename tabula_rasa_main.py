@@ -335,9 +335,6 @@ def history(update: Update, context: CallbackContext):
 
 def remove(update: Update, context: CallbackContext):
     """clear logs"""
-    txt_name = str(update.message.from_user.id) + '_' + str(update.effective_user.first_name)
-    bot_logs = "mylogs\\" + txt_name + ".txt"
-    os.remove(bot_logs)
     db.logs.delete_many({})
     update.message.reply_text('Ваши сообщения удалены')
 
