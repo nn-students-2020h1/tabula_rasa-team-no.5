@@ -4,7 +4,7 @@ from class_homework_1504 import Rectangle
 class RectangleTest(unittest.TestCase):
     def setUp(self):
         self.rectangle = Rectangle(5, 8, 12, 8)
-
+    
     def tearDown(self):
         self.rectangle.zeros = []
 
@@ -12,15 +12,15 @@ class RectangleTest(unittest.TestCase):
         square = self.rectangle.get_square()
         self.assertEqual(square, 96)
 
-    def test_notqeual(self):
+    def test_not_qeual(self):
         square = self.rectangle.get_square()
         self.assertNotEqual(square, 42)
 
-    def test_True(self):
+    def test_true(self):
         sq = self.rectangle.horizontal()
         self.assertTrue(sq)
 
-    def test_False(self):
+    def test_false(self):
         sq = self.rectangle.is_square()
         self.assertFalse(sq)
 
