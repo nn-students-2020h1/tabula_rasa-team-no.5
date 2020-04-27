@@ -69,13 +69,8 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(tabula_rasa_main.error(self.update, self.context), 'some_error')
 
     def test_remove(self):
-        self.update.effective_user.first_name = 'your name'
-        self.update.message.from_user.id = 123456789
-        self.update.message.text = 'bla-bla'
-        with open('mylogs\\123456789_your name.txt', 'w') as f:
-            f.write(self.update.message.text)
         tabula_rasa_main.remove(self.update, self.CallbackContext)
-        self.assertFalse(os.path.exists('mylogs\\123456789_your name.txt'))
+        self.assertEqual(tabula_rasa_main.db.logs.count_documents({}), 0)
 
 
 class TestsFacts(unittest.TestCase):
