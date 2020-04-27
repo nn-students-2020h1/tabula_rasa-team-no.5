@@ -19,6 +19,8 @@ class Rectangle:
     def is_square(self):
         if self.l == self.h:
             return True
+        else:
+            return None
 
 
     def horizontal(self):
@@ -36,9 +38,8 @@ class Rectangle:
         return zeros
 
     def dot_inside(self, coord_x, coord_y):
-        if coord_x > self.abs and coord_x < self.abs + self.l:
-            if coord_y < self.ord and coord_y > self.ord - self.h:
+        if (coord_x > self.abs) and (coord_x < self.abs + self.l):
+            if (coord_y < self.ord) and (coord_y > self.ord - self.h):
                 return 'Yes'
             else: return 'No'
         else: return 'No'
-
