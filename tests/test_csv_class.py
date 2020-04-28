@@ -25,7 +25,9 @@ def use_test():
 
 class TestAnalyser(unittest.TestCase):
     def setUp(self):
-        self.collection = mongomock.MongoClient().db.collection
+        self.client = mongomock.MongoClient()
+        self.db = self.client['somedb']
+        self.collection = self.db.logs
         self.update = mock.MagicMock()
         self.update.message.text = 'bla-bla'
         self.update.effective_user.first_name = 'your name'
@@ -68,6 +70,9 @@ class TestAnalyser(unittest.TestCase):
 
 class TestCorona(unittest.TestCase):
     def setUp(self):
+        self.client = mongomock.MongoClient()
+        self.db = self.client['somedb']
+        self.collection = self.db.logs
         self.update = mock.MagicMock()
         self.context = mock.MagicMock()
         self.update.message.from_user.id = 123456789
