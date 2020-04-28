@@ -25,7 +25,7 @@ loglist = []
 TODAY = (date.today() - timedelta(days=1)).strftime("%d.%m.%Y")
 
 # Create Data base
-client = pymongo.MongoClient('mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false')
+client = pymongo.MongoClient('localhost', 27017)
 db = client.logs
 collection = db.logs
 db_next = client.corona_data
