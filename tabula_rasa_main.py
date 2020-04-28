@@ -25,7 +25,7 @@ loglist = []
 TODAY = (date.today() - timedelta(days=1)).strftime("%d.%m.%Y")
 
 # Create Data base
-client = pymongo.MongoClient('localhost', 27017)
+client = pymongo.MongoClient('mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false')
 db = client.logs
 collection = db.logs
 db_next = client.corona_data
@@ -313,7 +313,7 @@ def corono_stats(update: Update, context: CallbackContext):
 
 def history(update: Update, context: CallbackContext):
     """Send a message whe the command /history is issued."""
-    len_base = collection.count_documents({})
+    len_base = collection.count_documents({'user': update.effective_user.first_name})
     if len_base == 0:
         update.message.reply_text('Вы ещё не писали мне сообщения')
         text = 'Вы ещё не писали мне сообщения'
@@ -325,7 +325,7 @@ def history(update: Update, context: CallbackContext):
     else:
         text = f'Ваши последние 5 сообщений:\n'
     t = 1
-    for user in collection.find().sort('time', -1).limit(5):
+    for user in collection.find({'user': update.effective_user.first_name}).sort('time', -1).limit(5):
         output = str(t) + '. ' + user['message'] + '\n'
         text += output
         t += 1
