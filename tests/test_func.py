@@ -2,7 +2,7 @@ import unittest
 from unittest import mock
 from unittest.mock import patch
 import requests
-import os.path
+import mongomock
 from io import StringIO
 
 
@@ -12,6 +12,9 @@ from tabula_rasa_main import get_data_from_site, loglist
 
 class TestFunctions(unittest.TestCase):
     def setUp(self) -> None:
+        self.client = mongomock.MongoClient()
+        self.db = self.client['somedb']
+        self.collection = self.db.logs
         self.update = mock.MagicMock()
         self.context = mock.MagicMock()
         self.CallbackContext = mock.MagicMock()
