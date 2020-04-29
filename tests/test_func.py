@@ -7,14 +7,12 @@ from io import StringIO
 
 
 import tabula_rasa_main
-from tabula_rasa_main import get_data_from_site, loglist
+from tabula_rasa_main import get_data_from_site
 
 
 class TestFunctions(unittest.TestCase):
     def setUp(self) -> None:
         self.client = mongomock.MongoClient()
-        self.db = self.client['somedb']
-        self.collection = self.db.logs
         self.update = mock.MagicMock()
         self.context = mock.MagicMock()
         self.CallbackContext = mock.MagicMock()
@@ -22,18 +20,19 @@ class TestFunctions(unittest.TestCase):
         self.update.effective_user.first_name = 'your name'
         self.update.message.text = 'bla-bla'
 
-    def tearDown(self) -> None:
-        global loglist
-        loglist = []
-
-    def test_start(self):
-        self.assertEqual(tabula_rasa_main.start(self.update, self.CallbackContext),
-                         'Привет, your name!\nВведи команду /help, чтобы узнать что я умею.')
+    #def test_start(self):
+        #self.update = mock.MagicMock(spec=['message'])
+        #self.update.effective_user.first_name = 'your name'
+        #self.assertEqual(tabula_rasa_main.start(self.update, self.CallbackContext),
+                         #'Привет, your name!\nВведи команду /help, чтобы узнать что я умею.')
 
     def test_id(self):
+        self.update = mock.MagicMock(spec=['message'])
+        self.update.message.from_user.id = 123456789
         self.assertEqual(tabula_rasa_main.user_id(self.update, self.CallbackContext), 'Ваш id: 123456789')
 
     def test_fortune(self):
+        self.update = mock.MagicMock(spec=['message'])
         list_answers = ["Ответ на твой вопрос: Определённо", "Ответ на твой вопрос: Не стоит",
                         "Ответ на твой вопрос: Ещё не время", "Ответ на твой вопрос: Рискуй",
                         "Ответ на твой вопрос: Возможно", "Ответ на твой вопрос: Думаю да",
@@ -41,6 +40,7 @@ class TestFunctions(unittest.TestCase):
         self.assertIn(tabula_rasa_main.fortune(self.update, self.CallbackContext), list_answers)
 
     def test_breakfast(self):
+        self.update = mock.MagicMock(spec=['message'])
         list_names = ["парфе", "фриттата", "фруктовый смузи", "запеченные яблоки", "роскошные бутерброды"]
         ingredients = {"парфе": "- печение \n- сгущенка \n- сливки 33%\n- лимон",
                        "фриттата": "- яйца\n- картофель\n- лук",
@@ -57,6 +57,7 @@ class TestFunctions(unittest.TestCase):
         self.assertIn(tabula_rasa_main.breakfast(self.update, self.CallbackContext), list_answers)
 
     def test_random_fact(self):
+        self.update = mock.MagicMock(spec=['message'])
         req = requests.get('https://cat-fact.herokuapp.com/facts')
         dict_facts = req.json()
         list_facts = []
@@ -65,9 +66,12 @@ class TestFunctions(unittest.TestCase):
         self.assertIn(tabula_rasa_main.random_fact(self.update, self.CallbackContext), list_facts)
 
     def test_echo(self):
+        self.update = mock.MagicMock(spec=['message'])
+        self.update.message.text = 'bla-bla'
         self.assertEqual(tabula_rasa_main.echo(self.update, self.CallbackContext), 'bla-bla')
 
     def test_error(self):
+        self.update = mock.MagicMock(spec=['message'])
         self.context.error = 'some_error'
         self.assertEqual(tabula_rasa_main.error(self.update, self.context), 'some_error')
 
@@ -79,21 +83,20 @@ class TestFunctions(unittest.TestCase):
 class TestsFacts(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.client = mongomock.MongoClient()
-        self.db = self.client['somedb']
-        self.collection = self.db.logs
         self.update = mock.MagicMock()
         self.update.message.from_user.id = 123456789
         self.update.effective_user.first_name = 'your name'
         self.CallbackContext = ''
 
     def test_bad_request(self):
+        self.update = mock.MagicMock(spec=['message'])
         with patch('tabula_rasa_main.requests.get') as mock_get:
             mock_get.return_value.ok = False
             data = get_data_from_site('http://qqq.com')
         self.assertEqual(data, None)
 
     def test_ok_request(self):
+        self.update = mock.MagicMock(spec=['message'])
         with patch('tabula_rasa_main.requests.get') as mock_get:
             mock_get.return_value.ok = True
             mock_get.return_value.json.return_value = {'cat': 1}
@@ -101,10 +104,39 @@ class TestsFacts(unittest.TestCase):
         self.assertEqual(data, {'cat': 1})
 
     def test_exception_request(self):
+        self.update = mock.MagicMock(spec=['message'])
         with patch('tabula_rasa_main.requests.get') as mock_get, patch('sys.stdout', new=StringIO()) as mock_out:
             mock_get.side_effect = Exception('qqq exception')
             get_data_from_site('http://google.com')
         self.assertEqual(mock_out.getvalue().strip(), 'Error occurred: qqq exception')
+
+    def test_get_facts_no_data(self):
+        self.update = mock.MagicMock(spec=['message'])
+        with patch('tabula_rasa_main.get_data_from_site') as mock_data:
+            mock_data.return_value = None
+            most_upvoted = tabula_rasa_main.fact(self.update, self.CallbackContext)
+        self.assertEqual(most_upvoted, '[ERR] Could not retrieve most upvoted fact')
+
+    def test_get_facts_no_data_random(self):
+        self.update = mock.MagicMock(spec=['message'])
+        with patch('tabula_rasa_main.get_data_from_site') as mock_data:
+            mock_data.return_value = None
+            most_upvoted = tabula_rasa_main.random_fact(self.update, self.CallbackContext)
+        self.assertEqual(most_upvoted, '[ERR] Could not retrieve most upvoted fact')
+
+    def test_get_facts_no_most_upvoted(self):
+        self.update = mock.MagicMock(spec=['message'])
+        with patch('tabula_rasa_main.get_data_from_site') as mock_data:
+            mock_data.return_value = {'all': [{'upvotes': 0, 'text': 'text message'}]}
+            most_liked = tabula_rasa_main.fact(self.update, self.CallbackContext)
+        self.assertEqual(most_liked, 'No most upvoted fact')
+
+    def test_get_facts_most_upvoted(self):
+        self.update = mock.MagicMock(spec=['message'])
+        with patch('tabula_rasa_main.get_data_from_site') as mock_data:
+            mock_data.return_value = {'all': [{'upvotes': 1, 'text': 'text message'}]}
+            most_liked = tabula_rasa_main.fact(self.update, self.CallbackContext)
+        self.assertEqual(most_liked, 'text message')
 
 
 if __name__ == '__main__':
