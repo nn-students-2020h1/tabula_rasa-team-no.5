@@ -4,12 +4,11 @@ from unittest.mock import patch
 import mongomock
 
 import tabula_rasa_main
-from tabula_rasa_main import AnalyseCSV
 
-reader = [{'Country_Region': 'Country_Region', 'Active': 'Active', 'Deaths': 'Deaths', 'Recovered': 'Recovered'},
+reader = {'date': '27.04.2020', 'info': [{'Country_Region': 'Country_Region', 'Active': 'Active', 'Deaths': 'Deaths', 'Recovered': 'Recovered'},
           {'Country_Region': 'Russia', 'Active': 5, 'Deaths': 1, 'Recovered': 100},
           {'Country_Region': 'USA', 'Active': 7, 'Deaths': 6, 'Recovered': 57},
-          {'Country_Region': 'Germany', 'Active': 15, 'Deaths': 9, 'Recovered': 23}]
+          {'Country_Region': 'Germany', 'Active': 15, 'Deaths': 9, 'Recovered': 23}]}
 
 reader_yesterday = [
     {'Country_Region': 'Country_Region', 'Active': 'Active', 'Deaths': 'Deaths', 'Recovered': 'Recovered'},
@@ -32,11 +31,13 @@ class TestAnalyser(unittest.TestCase):
         self.update.message.text = 'bla-bla'
         self.update.effective_user.first_name = 'your name'
         self.update.message.from_user.id = 123456789
-        self.analyser = tabula_rasa_main.AnalyseCSV()
-        self.analyser.data = reader
+        with patch('tabula_rasa_main.corona.find_one') as mock_get:
+            mock_get.return_value = reader
+            self.analyser = tabula_rasa_main.AnalyseCSV()
         self.analyser.yesterday = reader_yesterday
 
     def tearDown(self) -> None:
+        self.db.logging.delete_many({})
         global loglist
         loglist = []
 
@@ -70,26 +71,19 @@ class TestAnalyser(unittest.TestCase):
 
 class TestCorona(unittest.TestCase):
     def setUp(self):
-        self.client = mongomock.MongoClient()
-        self.db = self.client['somedb']
-        self.collection = self.db.logs
-        self.update = mock.MagicMock()
         self.context = mock.MagicMock()
-        self.update.message.from_user.id = 123456789
-        self.update.effective_user.first_name = 'your name'
-        self.update.message.text = 'bla-bla'
+        self.update = mock.MagicMock()
+        self.update.message = 'bla-bla'
         self.CallbackContext = ''
-        self.analyser = tabula_rasa_main.AnalyseCSV()
-        self.analyser.data = reader
+        with patch('tabula_rasa_main.corona.find_one') as mock_get:
+            mock_get.return_value = reader
+            self.analyser = tabula_rasa_main.AnalyseCSV()
         self.analyser.yesterday = reader_yesterday
-
-    def tearDown(self) -> None:
-        global loglist
-        loglist = []
 
     @patch('tabula_rasa_main.TODAY', 'some date')
     def test_corono_stats(self):
-        with patch.object(AnalyseCSV, 'compare_days') as mock_dynamics:
+        self.update = mock.MagicMock(spec=['message'])
+        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics:
             mock_dynamics.return_value = [
                 {'Country': 'Russia', 'Parametr': 5},
                 {'Country': 'USA', 'Parametr': 7},
@@ -100,7 +94,8 @@ class TestCorona(unittest.TestCase):
 
     @patch('tabula_rasa_main.TODAY', 'some date')
     def test_corona_stats_dynamic(self):
-        with patch.object(AnalyseCSV, 'compare_days') as mock_dynamics:
+        self.update = mock.MagicMock(spec=['message'])
+        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics:
             mock_dynamics.return_value = [
                 {'Country': 'Germany', 'Parametr': 14},
                 {'Country': 'USA', 'Parametr': 5},
@@ -114,13 +109,14 @@ class TestCorona(unittest.TestCase):
 
     @patch('tabula_rasa_main.TODAY', 'some date')
     def test_corona_world_dynamic(self):
-        with patch.object(AnalyseCSV, 'compare_days') as mock_dynamics:
+        self.update = mock.MagicMock(spec=['message'])
+        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics:
             mock_dynamics.return_value = [
                 {'Country': 'Germany', 'Parametr': 14},
                 {'Country': 'USA', 'Parametr': 5},
                 {'Country': 'Russia', 'Parametr': 2}]
             text = tabula_rasa_main.corona_world_dynamic(self.update, self.CallbackContext)
-        self.assertEqual(text, 
+        self.assertEqual(text,
                          'Мировая статистика за прошедшие сутки:\nНовых заражённых: 21\nУмерло: 21\nВыздоровело: 21\n')
 
 
