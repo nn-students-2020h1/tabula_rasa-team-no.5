@@ -75,10 +75,6 @@ class TestFunctions(unittest.TestCase):
         self.context.error = 'some_error'
         self.assertEqual(tabula_rasa_main.error(self.update, self.context), 'some_error')
 
-    def test_remove(self):
-        tabula_rasa_main.remove(self.update, self.CallbackContext)
-        self.assertEqual(tabula_rasa_main.db.logs.count_documents({}), 0)
-
 
 class TestsFacts(unittest.TestCase):
 
