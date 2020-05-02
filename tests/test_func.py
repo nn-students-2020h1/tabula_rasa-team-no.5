@@ -91,6 +91,9 @@ class TestsFacts(unittest.TestCase):
         self.update.effective_user.first_name = 'your name'
         self.CallbackContext = ''
 
+    def tearDown(self) -> None:
+        db.log.delete_many({})
+        
     def test_bad_request(self):
         self.update = mock.MagicMock(spec=['message'])
         with patch('tabula_rasa_main.requests.get') as mock_get:
