@@ -82,8 +82,8 @@ class TestCorona(unittest.TestCase):
     def tearDown(self) -> None:
         db.log.delete_many({})
 
-    @patch('tabula_rasa_main.collection', db.log)
     @patch('tabula_rasa_main.TODAY', 'some date')
+    @patch('tabula_rasa_main.collection', db.log)
     def test_corono_stats(self):
         self.update = mock.MagicMock(spec=['message'])
         with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics:
@@ -95,8 +95,8 @@ class TestCorona(unittest.TestCase):
         answer = '5 провинций с наибольшим числом заражённых (some date)\nСтрана: Germany | Число зараженных: 15\nСтрана: USA | Число зараженных: 7\nСтрана: Russia | Число зараженных: 5\n'
         self.assertEqual(text, answer)
 
-    @patch('tabula_rasa_main.collection', db.log)
     @patch('tabula_rasa_main.TODAY', 'some date')
+    @patch('tabula_rasa_main.collection', db.log)
     def test_corona_stats_dynamic(self):
         self.update = mock.MagicMock(spec=['message'])
         with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics:
@@ -111,8 +111,8 @@ class TestCorona(unittest.TestCase):
                          'Страна: USA | Количество новых зараженных 5 \n'
                          'Страна: Russia | Количество новых зараженных 2 \n')
 
-    @patch('tabula_rasa_main.collection', db.log)
     @patch('tabula_rasa_main.TODAY', 'some date')
+    @patch('tabula_rasa_main.collection', db.log)
     def test_corona_world_dynamic(self):
         self.update = mock.MagicMock(spec=['message'])
         with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics:
