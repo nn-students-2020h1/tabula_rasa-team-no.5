@@ -4,7 +4,6 @@ from unittest.mock import patch
 import mongomock
 
 from tabula_rasa_main import history
-import tabula_rasa_main
 
 LOG_VALUES_3 = [{'user': 'my_user', 'message': 'test message1', 'time': '04-25-2020'},
                 {'user': 'my_user', 'message': 'test message2', 'time': '04-26-2020'},
