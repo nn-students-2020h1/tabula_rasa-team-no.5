@@ -5,7 +5,7 @@ from class_homework_1504 import Rectangle
 class RectangleTest(unittest.TestCase):
     def setUp(self):
         self.rectangle = Rectangle(5, 8, 12, 8)
-        
+
     def tearDown(self):
         self.rectangle.zeros = []
 
