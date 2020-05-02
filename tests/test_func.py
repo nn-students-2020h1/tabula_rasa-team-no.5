@@ -10,9 +10,13 @@ import tabula_rasa_main
 from tabula_rasa_main import get_data_from_site
 
 
+client = mongomock.MongoClient('127.0.0.1', 27017)
+db = client['somedb']
+db.create_collection('log')
+
+
 class TestFunctions(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = mongomock.MongoClient()
         self.update = mock.MagicMock()
         self.context = mock.MagicMock()
         self.CallbackContext = mock.MagicMock()
@@ -20,27 +24,30 @@ class TestFunctions(unittest.TestCase):
         self.update.effective_user.first_name = 'your name'
         self.update.message.text = 'bla-bla'
 
-    #def test_start(self):
-        #self.update = mock.MagicMock(spec=['message'])
-        #self.update.effective_user.first_name = 'your name'
-        #self.assertEqual(tabula_rasa_main.start(self.update, self.CallbackContext),
-                         #'Привет, your name!\nВведи команду /help, чтобы узнать что я умею.')
+    def tearDown(self) -> None:
+        db.log.delete_many({})
 
+    @patch('tabula_rasa_main.collection', db.log)
+    def test_start(self):
+        self.update.effective_user.first_name = 'your name'
+        self.assertEqual(tabula_rasa_main.start(self.update, self.CallbackContext),
+                         'Привет, your name!\nВведи команду /help, чтобы узнать что я умею.')
+
+    @patch('tabula_rasa_main.collection', db.log)
     def test_id(self):
-        self.update = mock.MagicMock(spec=['message'])
         self.update.message.from_user.id = 123456789
         self.assertEqual(tabula_rasa_main.user_id(self.update, self.CallbackContext), 'Ваш id: 123456789')
 
+    @patch('tabula_rasa_main.collection', db.log)
     def test_fortune(self):
-        self.update = mock.MagicMock(spec=['message'])
         list_answers = ["Ответ на твой вопрос: Определённо", "Ответ на твой вопрос: Не стоит",
                         "Ответ на твой вопрос: Ещё не время", "Ответ на твой вопрос: Рискуй",
                         "Ответ на твой вопрос: Возможно", "Ответ на твой вопрос: Думаю да",
                         "Ответ на твой вопрос: Духи говорят нет", 'Ответ на твой вопрос: Не могу сказать']
         self.assertIn(tabula_rasa_main.fortune(self.update, self.CallbackContext), list_answers)
 
+    @patch('tabula_rasa_main.collection', db.log)
     def test_breakfast(self):
-        self.update = mock.MagicMock(spec=['message'])
         list_names = ["парфе", "фриттата", "фруктовый смузи", "запеченные яблоки", "роскошные бутерброды"]
         ingredients = {"парфе": "- печение \n- сгущенка \n- сливки 33%\n- лимон",
                        "фриттата": "- яйца\n- картофель\n- лук",
@@ -56,8 +63,8 @@ class TestFunctions(unittest.TestCase):
         list_answers = [f'Для приготовления такого блюда как {i} тебе понадобятся:\n{ingredients[i]}.\nПодробный рецепт можно найти здесь: {recipes[i]}! \nУдачи!' for i in list_names]
         self.assertIn(tabula_rasa_main.breakfast(self.update, self.CallbackContext), list_answers)
 
+    @patch('tabula_rasa_main.collection', db.log)
     def test_random_fact(self):
-        self.update = mock.MagicMock(spec=['message'])
         req = requests.get('https://cat-fact.herokuapp.com/facts')
         dict_facts = req.json()
         list_facts = []
@@ -65,15 +72,20 @@ class TestFunctions(unittest.TestCase):
             list_facts.append(dict_facts['all'][i]['text'])
         self.assertIn(tabula_rasa_main.random_fact(self.update, self.CallbackContext), list_facts)
 
+    @patch('tabula_rasa_main.collection', db.log)
     def test_echo(self):
-        self.update = mock.MagicMock(spec=['message'])
         self.update.message.text = 'bla-bla'
         self.assertEqual(tabula_rasa_main.echo(self.update, self.CallbackContext), 'bla-bla')
 
+    @patch('tabula_rasa_main.collection', db.log)
     def test_error(self):
-        self.update = mock.MagicMock(spec=['message'])
         self.context.error = 'some_error'
         self.assertEqual(tabula_rasa_main.error(self.update, self.context), 'some_error')
+
+    @patch('tabula_rasa_main.collection', db.log)
+    def test_remove(self):
+        tabula_rasa_main.remove(self.update, self.CallbackContext)
+        self.assertEqual(db.logs.count_documents({}), 0)
 
 
 class TestsFacts(unittest.TestCase):
