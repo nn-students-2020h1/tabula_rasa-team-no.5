@@ -13,7 +13,7 @@ class Rectangle:
             warnings.warn('One of the parameters is below zero', UserWarning)
         elif length_n == 0:
             raise ValueError('One of the parameters is zero')
-        else: 
+        else:
             self.length = length_n
 
     def get_square(self):
@@ -26,7 +26,7 @@ class Rectangle:
     def horizontal(self):
         if self.length > self.height:
             return True
-        else: 
+        else:
             return False
 
     def in_start(self):
@@ -41,7 +41,7 @@ class Rectangle:
         if (coord_x > self.abs) and (coord_x < self.abs + self.length):
             if (coord_y < self.ord) and (coord_y > self.ord - self.height):
                 return 'Yes'
-            else: 
+            else:
                 return 'No'
-        else: 
+        else:
             return 'No'
