@@ -79,6 +79,9 @@ class TestCorona(unittest.TestCase):
             self.analyser = tabula_rasa_main.AnalyseCSV()
         self.analyser.yesterday = reader_yesterday
 
+    def tearDown(self) -> None:
+        db.log.delete_many({})
+
     @patch('tabula_rasa_main.collection', db.log)
     @patch('tabula_rasa_main.TODAY', 'some date')
     def test_corono_stats(self):
