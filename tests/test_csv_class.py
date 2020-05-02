@@ -72,7 +72,7 @@ class TestCorona(unittest.TestCase):
     def setUp(self):
         self.context = mock.MagicMock()
         self.update = mock.MagicMock()
-        self.update.message = 'bla-bla'
+        self.update = mock.MagicMock(spec=['message'])
         self.CallbackContext = mock.MagicMock()
         with patch('tabula_rasa_main.corona.find_one') as mock_get:
             mock_get.return_value = reader
@@ -85,8 +85,8 @@ class TestCorona(unittest.TestCase):
     @patch('tabula_rasa_main.TODAY', 'some date')
     @patch('tabula_rasa_main.collection', db.log)
     def test_corono_stats(self):
-        self.update = mock.MagicMock(spec=['message'])
-        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics:
+        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics, patch('tabula_rasa_main.corona.find_one') as mock_get:
+            mock_get.return_value = reader
             mock_dynamics.return_value = [
                 {'Country': 'Russia', 'Parametr': 5},
                 {'Country': 'USA', 'Parametr': 7},
@@ -98,8 +98,8 @@ class TestCorona(unittest.TestCase):
     @patch('tabula_rasa_main.TODAY', 'some date')
     @patch('tabula_rasa_main.collection', db.log)
     def test_corona_stats_dynamic(self):
-        self.update = mock.MagicMock(spec=['message'])
-        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics:
+        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics, patch('tabula_rasa_main.corona.find_one') as mock_get:
+            mock_get.return_value = reader
             mock_dynamics.return_value = [
                 {'Country': 'Germany', 'Parametr': 14},
                 {'Country': 'USA', 'Parametr': 5},
@@ -114,8 +114,8 @@ class TestCorona(unittest.TestCase):
     @patch('tabula_rasa_main.TODAY', 'some date')
     @patch('tabula_rasa_main.collection', db.log)
     def test_corona_world_dynamic(self):
-        self.update = mock.MagicMock(spec=['message'])
-        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics:
+        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics, patch('tabula_rasa_main.corona.find_one') as mock_get:
+            mock_get.return_value = reader
             mock_dynamics.return_value = [
                 {'Country': 'Germany', 'Parametr': 14},
                 {'Country': 'USA', 'Parametr': 5},
