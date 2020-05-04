@@ -5,16 +5,13 @@ import mongomock
 
 import tabula_rasa_main
 
-reader = {'date': '27.04.2020', 'info': [{'Country_Region': 'Country_Region', 'Active': 'Active', 'Deaths': 'Deaths', 'Recovered': 'Recovered'},
-          {'Country_Region': 'Russia', 'Active': 5, 'Deaths': 1, 'Recovered': 100},
-          {'Country_Region': 'USA', 'Active': 7, 'Deaths': 6, 'Recovered': 57},
-          {'Country_Region': 'Germany', 'Active': 15, 'Deaths': 9, 'Recovered': 23}]}
+reader = {'date': '27.04.2020', 'info': [{'Country_Region': 'Russia', 'Active': '5', 'Deaths': '1', 'Recovered': '100'},
+                                         {'Country_Region': 'USA', 'Active': '7', 'Deaths': '6', 'Recovered': '57'},
+                                         {'Country_Region': 'Germany', 'Active': '15', 'Deaths': '9', 'Recovered': '23'}]}
 
-reader_yesterday = [
-    {'Country_Region': 'Country_Region', 'Active': 'Active', 'Deaths': 'Deaths', 'Recovered': 'Recovered'},
-    {'Country_Region': 'Russia', 'Active': 3, 'Deaths': 0, 'Recovered': 80},
-    {'Country_Region': 'USA', 'Active': 2, 'Deaths': 0, 'Recovered': 47},
-    {'Country_Region': 'Germany', 'Active': 1, 'Deaths': 0, 'Recovered': 13}]
+reader_yesterday = [{'Country_Region': 'Russia', 'Active': '3', 'Deaths': '0', 'Recovered': '80'},
+                    {'Country_Region': 'USA', 'Active': '2', 'Deaths': '0', 'Recovered': '47'},
+                    {'Country_Region': 'Germany', 'Active': '1', 'Deaths': '0', 'Recovered': '13'}]
 
 client = mongomock.MongoClient('127.0.0.1', 27017)
 db = client['somedb']
@@ -46,19 +43,11 @@ class TestAnalyser(unittest.TestCase):
         self.assertEqual(top, [9, 6])
 
     @patch('tabula_rasa_main.collection', db.log)
-    def test_top_covid(self):
-        list_dict = self.analyser.top_covid()
-        self.assertEqual(list_dict, [
+    def test_compare_days_not_compare(self):
+        self.assertEqual(self.analyser.compare_days('Active'), [
             {'Country': 'Germany', 'Parametr': 15},
             {'Country': 'USA', 'Parametr': 7},
             {'Country': 'Russia', 'Parametr': 5}])
-
-    @patch('tabula_rasa_main.collection', db.log)
-    def test_compare_days_not_compare(self):
-        self.assertEqual(self.analyser.compare_days('Active'), [
-            {'Country': 'Russia', 'Parametr': 5},
-            {'Country': 'USA', 'Parametr': 7},
-            {'Country': 'Germany', 'Parametr': 15}])
 
     @patch('tabula_rasa_main.collection', db.log)
     def test_compare_days(self):
@@ -92,8 +81,11 @@ class TestCorona(unittest.TestCase):
                 {'Country': 'USA', 'Parametr': 7},
                 {'Country': 'Germany', 'Parametr': 15}]
             text = tabula_rasa_main.corono_stats(self.update, self.CallbackContext)
-        answer = '5 провинций с наибольшим числом заражённых (some date)\nСтрана: Germany | Число зараженных: 15\nСтрана: USA | Число зараженных: 7\nСтрана: Russia | Число зараженных: 5\n'
-        self.assertEqual(text, answer)
+        answer = '5 провинций с наибольшим числом заражённых (some date)\n' \
+                 'Страна: Germany | Число зараженных: 15\n' \
+                 'Страна: USA | Число зараженных: 7\n' \
+                 'Страна: Russia | Число зараженных: 5'
+        self.assertEqual(answer, text)
 
     @patch('tabula_rasa_main.TODAY', 'some date')
     @patch('tabula_rasa_main.collection', db.log)
@@ -107,9 +99,9 @@ class TestCorona(unittest.TestCase):
             text = tabula_rasa_main.corona_stats_dynamic(self.update, self.CallbackContext)
         self.assertEqual(text,
                          '5 провинций с наибольшим числом новых заражённых (some date)\n'
-                         'Страна: Germany | Количество новых зараженных 14 \n'
-                         'Страна: USA | Количество новых зараженных 5 \n'
-                         'Страна: Russia | Количество новых зараженных 2 \n')
+                         'Страна: Germany | Количество новых зараженных: 14\n'
+                         'Страна: USA | Количество новых зараженных: 5\n'
+                         'Страна: Russia | Количество новых зараженных: 2')
 
     @patch('tabula_rasa_main.TODAY', 'some date')
     @patch('tabula_rasa_main.collection', db.log)
@@ -121,8 +113,10 @@ class TestCorona(unittest.TestCase):
                 {'Country': 'USA', 'Parametr': 5},
                 {'Country': 'Russia', 'Parametr': 2}]
             text = tabula_rasa_main.corona_world_dynamic(self.update, self.CallbackContext)
-        self.assertEqual(text,
-                         'Мировая статистика за прошедшие сутки:\nНовых заражённых: 21\nУмерло: 21\nВыздоровело: 21\n')
+        self.assertEqual(text, '''Мировая статистика за прошедшие сутки:
+        Новых заражённых: 21
+        Умерло: 21
+        Выздоровело: 21''')
 
 
 if __name__ == '__main__':
