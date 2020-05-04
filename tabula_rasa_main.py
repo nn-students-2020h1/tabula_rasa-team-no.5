@@ -1,3 +1,6 @@
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+
 import logging
 import random
 import time
@@ -9,6 +12,7 @@ from setup import PROXY, TOKEN
 from telegram import Bot, Update
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
 from datetime import datetime, date, timedelta
+from functools import reduce
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -187,93 +191,55 @@ class AnalyseCSV:
         self.yesterday = corona.find_one({'date': yesterday})['info']
 
     def count_all(self, parametr):
-        sum_par = 0
-        for row in self.data:
-            if not str(row[parametr]).isdigit():
-                continue
-            sum_par += float(row[parametr])
-        return sum_par
+        suma = reduce(lambda a, x: a + x, [int(i[parametr]) for i in self.data if i[parametr].isdigit()])
+        return suma
 
-    def top_n(self, parametr, n):
-        list_par = []
-        for row in self.data:
-            if not str(row[parametr]).isdigit():
-                continue
-            list_par.append(int(row[parametr]))
+    def top_n(self, parametr, n=5):
+        list_par = [int(i[parametr]) for i in self.data if i[parametr].isdigit()]
         list_par.sort(reverse=True)
         top = list_par[:n]
         return top
 
-    def top_covid(self, parametr='Active', n=5):
-        list_par = []
-        for row in self.data:
-            if not str(row[parametr]).isdigit():
-                continue
-            list_par.append({'Country': row['Country_Region'], 'Parametr': int(row[parametr])})
-        list_par.sort(key=lambda d: d['Parametr'], reverse=True)
-        if n != -1:
-            top = list_par[:n]
-        else:
-            top = list_par
-        return top
+    def compare_days(self, parametr='Active', compare=False):
+        countries = list(set([i['Country_Region'] for i in self.data]))
+        current = [{
+            'Country': i,
+            'Parametr': reduce(lambda a, x: a + x, [int(c[parametr])
+                                                    for c in self.data
+                                                    if c[parametr].isdigit() and c['Country_Region'] == i], 0)
+        } for i in countries]
 
-    def compare_days(self, parametr, compare=False):
-        current = []
-        previous = []
-        country = ''
-        for row in self.data:
-            if not str(row[parametr]).isdigit():
-                continue
-            if row['Country_Region'] == country:
-                current[-1]['Parametr'] += int(row[parametr])
-            else:
-                current.append({'Country': row['Country_Region'], 'Parametr': int(row[parametr])})
-            country = row['Country_Region']
-        for row in self.yesterday:
-            if not str(row[parametr]).isdigit():
-                continue
-            if row['Country_Region'] == country:
-                previous[-1]['Parametr'] += int(row[parametr])
-            else:
-                previous.append({'Country': row['Country_Region'], 'Parametr': int(row[parametr])})
-            country = row['Country_Region']
-        new = []
+        previous = [{
+            'Country': i,
+            'Parametr': reduce(lambda a, x: a + x, [int(c[parametr])
+                                                    for c in self.yesterday
+                                                    if c[parametr].isdigit() and c['Country_Region'] == i], 0)
+        } for i in countries]
+
         if compare:
-            for i in range(len(previous)):
-                new.append(
-                    {
-                        'Country': previous[i]['Country'],
-                        'Parametr': int(current[i]['Parametr']) - int(previous[i]['Parametr'])
-                    })
-            new.sort(key=lambda d: d['Parametr'], reverse=True)
-            top = new[:5]
-            return top
+            comp = [{
+                'Country': c['Country'],
+                'Parametr': current[i]['Parametr'] - c['Parametr']
+            } for i, c in enumerate(previous)]
+            comp.sort(key=lambda d: d['Parametr'], reverse=True)
+            return comp[:5]
         else:
+            current.sort(key=lambda d: d['Parametr'], reverse=True)
             return current
 
 
 @mylogs
 def corona_world_dynamic(update: Update, context: CallbackContext):
     corona_base = AnalyseCSV()
-    new_active = corona_base.compare_days('Active', compare=True)
-    new_death = corona_base.compare_days('Deaths', compare=True)
-    new_recovered = corona_base.compare_days('Recovered', compare=True)
-    text = 'Мировая статистика за прошедшие сутки:\n'
 
-    suma = 0
-    for i in new_active:
-        suma += i['Parametr']
-    text += 'Новых заражённых: {}\n'.format(suma)
+    suma_active = reduce(lambda a, x: a + int(x['Parametr']), corona_base.compare_days('Active', compare=True), 0)
+    suma_death = reduce(lambda a, x: a + int(x['Parametr']), corona_base.compare_days('Deaths', compare=True), 0)
+    suma_recovered = reduce(lambda a, x: a + int(x['Parametr']), corona_base.compare_days('Recovered', compare=True), 0)
 
-    suma = 0
-    for i in new_death:
-        suma += i['Parametr']
-    text += 'Умерло: {}\n'.format(suma)
-
-    suma = 0
-    for i in new_recovered:
-        suma += i['Parametr']
-    text += 'Выздоровело: {}\n'.format(suma)
+    text = '''Мировая статистика за прошедшие сутки:
+        Новых заражённых: {}
+        Умерло: {}
+        Выздоровело: {}'''.format(suma_active, suma_death, suma_recovered)
     update.message.reply_text(text)
     return text
 
@@ -281,15 +247,12 @@ def corona_world_dynamic(update: Update, context: CallbackContext):
 @mylogs
 def corona_stats_dynamic(update: Update, context: CallbackContext):
     corona_base = AnalyseCSV()
-    new_active = corona_base.compare_days('Active', compare=True)
-    text = f'5 провинций с наибольшим числом новых заражённых ({TODAY})\n'
-    if len(new_active) >= 5:
-        n = 5
-    else:
-        n = len(new_active)
-    for i in range(n):
-        text += "Страна: {} | Количество новых зараженных {} \n".format(new_active[i]['Country'],
-                                                                        new_active[i]['Parametr'])
+
+    text_list = [f'Страна: {i["Country"]} | Количество новых зараженных: {i["Parametr"]}'
+                 for i in corona_base.compare_days('Active', compare=True)][:5]
+
+    text = f'5 провинций с наибольшим числом новых заражённых ({TODAY})\n' + '\n'.join(text_list)
+
     update.message.reply_text(text)
     return text
 
@@ -297,11 +260,14 @@ def corona_stats_dynamic(update: Update, context: CallbackContext):
 @mylogs
 def corono_stats(update: Update, context: CallbackContext):
     corona_data = AnalyseCSV()
-    corona_active = corona_data.compare_days('Active')
+    corona_active = corona_data.compare_days('Active')[:]
     corona_active.sort(key=lambda d: d['Parametr'], reverse=True)
-    text = f'5 провинций с наибольшим числом заражённых ({TODAY})\n'
-    for string in corona_active[:5]:
-        text += f'Страна: {string["Country"]} | Число зараженных: {string["Parametr"]}\n'
+
+    text_list = [f'Страна: {i["Country"]} | Число зараженных: {i["Parametr"]}'
+                 for i in corona_active][:5]
+
+    text = f'5 провинций с наибольшим числом заражённых ({TODAY})\n' + '\n'.join(text_list)
+
     update.message.reply_text(text)
     return text
 
