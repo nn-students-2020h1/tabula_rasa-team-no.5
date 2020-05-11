@@ -61,7 +61,8 @@ class TestCorona(unittest.TestCase):
     def setUp(self):
         self.context = mock.MagicMock()
         self.update = mock.MagicMock()
-        self.update = mock.MagicMock(spec=['message'])
+        self.update.message.text = 'bla-bla'
+        self.update.effective_user.first_name = 'name'
         self.CallbackContext = mock.MagicMock()
         with patch('tabula_rasa_main.corona.find_one') as mock_get:
             mock_get.return_value = reader
