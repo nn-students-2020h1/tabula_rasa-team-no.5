@@ -11,7 +11,7 @@ import re
 
 from setup import PROXY, TOKEN
 from telegram import Bot, Update
-from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater, ConversationHandler
+from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
 from datetime import datetime, date, timedelta
 from functools import reduce
 
@@ -125,7 +125,7 @@ def breakfast(update: Update, context: CallbackContext):
                "Запеченные яблоки": "https://www.youtube.com/watch?v=rxyE85xdoRY",
                "Роскошные бутерброды": "https://www.youtube.com/watch?v=SB3VdgW_-R0"}
     random_one = random.choice(list_names)
-    update.message.reply_text(f'Кажется, твой завтрак удачи на сегодня - это...')
+    update.message.reply_text('Кажется, твой завтрак удачи на сегодня - это...')
     for i in [3, 2, 1]:
         update.message.reply_text(f"...{i}...")
         time.sleep(1)
@@ -391,7 +391,7 @@ def history(update: Update, context: CallbackContext):
         n = len_base
         text = f'Ваши последние {n} сообщения:\n'
     else:
-        text = f'Ваши последние 5 сообщений:\n'
+        text = 'Ваши последние 5 сообщений:\n'
     t = 1
     for user in collection.find({'user': update.effective_user.first_name}).sort('time', -1).limit(5):
         output = str(t) + '. ' + user['message'] + '\n'
