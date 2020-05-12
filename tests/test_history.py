@@ -42,7 +42,7 @@ class TestHistory(unittest.TestCase):
 
     @patch('tabula_rasa_main.collection', db.history)
     def test_one_message(self):
-        db.history.insert(LOG_VALUE_1)
+        db.history.insert_one(LOG_VALUE_1)
         reply_text = history(self.update, self.CallbackContext)
         self.assertEqual(reply_text, 'Ваше последнее сообщение\n1. test message only\n')
 
