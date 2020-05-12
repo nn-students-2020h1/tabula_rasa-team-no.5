@@ -238,11 +238,11 @@ class TestCoronaDate(unittest.TestCase):
     @patch('tabula_rasa_main.collection', db.log)
     def test_no_data_for_date(self):
         self.update.message.text = '/corona 04-05'
-        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics, patch('tabula_rasa_main.corona.find_one') as mock_get:
-            mock_get = 'smth'
+        with patch.object(tabula_rasa_main.AnalyseCSV, 'compare_days') as mock_dynamics:
             mock_dynamics.return_value = []
             text = tabula_rasa_main.corono_stats(self.update, self.CallbackContext)
         self.assertEqual(text, 'Нет данных за эту дату')
 
+        
 if __name__ == '__main__':
     unittest.main()
