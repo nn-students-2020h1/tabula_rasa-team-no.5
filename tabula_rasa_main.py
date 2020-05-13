@@ -358,24 +358,34 @@ def data_stats(datte, par='Active', comp=False):
         if len(day) != 3:
             day.append('2020')
         try:
-            days = [
-                date(int(day[-1]), int(day[0]), int(day[1])).strftime("%m-%d-%Y"),
-                date(int(day[-1]), int(day[1]), int(day[0])).strftime("%m-%d-%Y")
-            ]
-            yests = [
-                date(int(day[-1]), (int(day[0]) - 1), int(day[1])).strftime("%m-%d-%Y"),
-                date(int(day[-1]), int(day[1]), (int(day[0]) - 1)).strftime("%m-%d-%Y")
-            ]
-        except:
-            days = [date(int(day[-1]), int(day[1]), int(day[0])).strftime("%m-%d-%Y")]
-            yests = [date(int(day[-1]), int(day[1]), (int(day[0]) - 1)).strftime("%m-%d-%Y")]
-        for i in range(len(days)):
-            corona = AnalyseCSV(days[i-1], yests[i-1])
+            days = date(int(day[-1]), int(day[1]), int(day[0])).strftime("%m-%d-%Y")
+            if day[0] not in ['1', '01']:
+                yests = date(int(day[-1]), int(day[1]), (int(day[0]) - 1)).strftime("%m-%d-%Y")
+            else:
+                try:
+                    yests = date(int(day[-1]), int(day[1])-1, 31).strftime("%m-%d-%Y")
+                except:
+                    yests = date(int(day[-1]), int(day[1]) - 1, 30).strftime("%m-%d-%Y")
+            corona = AnalyseCSV(days, yests)
             result = corona.compare_days(par, compare=comp)[:]
-            if len(result):
-                break
-        else:
-            result = 'Нет данных за эту дату'
+            if not len(result):
+                result = 'Нет данных за эту дату'
+        except:
+            try:
+                days = date(int(day[-1]), int(day[0]), int(day[1])).strftime("%m-%d-%Y")
+                if day[1] not in ['1', '01']:
+                    yests = date(int(day[-1]), int(day[0]), (int(day[1]) - 1)).strftime("%m-%d-%Y")
+                else:
+                    try:
+                        yests = date(int(day[-1]), (int(day[0]) - 1), 31).strftime("%m-%d-%Y")
+                    except:
+                        yests = date(int(day[-1]), (int(day[0]) - 1), 30).strftime("%m-%d-%Y")
+                corona = AnalyseCSV(days, yests)
+                result = corona.compare_days(par, compare=comp)[:]
+                if not len(result):
+                    result = 'Нет данных за эту дату'
+            except:
+                result = 'Неверная дата'
     return result, data
 
 
