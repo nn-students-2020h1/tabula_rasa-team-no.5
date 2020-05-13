@@ -7,6 +7,7 @@ import time
 import requests
 import csv
 import pymongo
+import re
 
 from setup import PROXY, TOKEN
 from telegram import Bot, Update
@@ -124,7 +125,7 @@ def breakfast(update: Update, context: CallbackContext):
                "Запеченные яблоки": "https://www.youtube.com/watch?v=rxyE85xdoRY",
                "Роскошные бутерброды": "https://www.youtube.com/watch?v=SB3VdgW_-R0"}
     random_one = random.choice(list_names)
-    update.message.reply_text(f'Кажется, твой завтрак удачи на сегодня - это...')
+    update.message.reply_text('Кажется, твой завтрак удачи на сегодня - это...')
     for i in [3, 2, 1]:
         update.message.reply_text(f"...{i}...")
         time.sleep(1)
@@ -164,10 +165,31 @@ def random_fact(update: Update, context: CallbackContext):
 
 
 class AnalyseCSV:
-    def __init__(self):
-        i = 0
-        while True:
-            day = (date.today() - timedelta(days=i)).strftime("%m-%d-%Y")
+    def __init__(self, day=None, yesterday=None):
+        if not (day and yesterday):
+            i = 0
+            while True:
+                day = (date.today() - timedelta(days=i)).strftime("%m-%d-%Y")
+                if corona.find_one({'date': day}) is None:
+                    r = requests.get(
+                        f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{day}.csv')
+                    if r.status_code == 200:
+                        decoded_content = r.content.decode('utf-8')
+                        cr = csv.DictReader(decoded_content.splitlines(), delimiter=',')
+                        corona.insert_one({'date': day, 'info': list(cr)})
+                    else:
+                        i += 1
+                else:
+                    break
+            yesterday = (date.today() - timedelta(days=i + 1)).strftime("%m-%d-%Y")
+            if corona.find_one({'date': yesterday}) is None:
+                r = requests.get(
+                    f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{yesterday}.csv')
+                if r.status_code == 200:
+                    decoded_content = r.content.decode('utf-8')
+                    cr = csv.DictReader(decoded_content.splitlines(), delimiter=',')
+                    corona.insert_one({'date': yesterday, 'info': list(cr)})
+        else:
             if corona.find_one({'date': day}) is None:
                 r = requests.get(
                     f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{day}.csv')
@@ -176,19 +198,22 @@ class AnalyseCSV:
                     cr = csv.DictReader(decoded_content.splitlines(), delimiter=',')
                     corona.insert_one({'date': day, 'info': list(cr)})
                 else:
-                    i += 1
-            else:
-                break
-        yesterday = (date.today() - timedelta(days=i + 1)).strftime("%m-%d-%Y")
-        if corona.find_one({'date': yesterday}) is None:
-            r = requests.get(
-                f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{yesterday}.csv')
-            if r.status_code == 200:
-                decoded_content = r.content.decode('utf-8')
-                cr = csv.DictReader(decoded_content.splitlines(), delimiter=',')
-                corona.insert_one({'date': yesterday, 'info': list(cr)})
-        self.data = corona.find_one({'date': day})['info']
-        self.yesterday = corona.find_one({'date': yesterday})['info']
+                    day = None
+            if corona.find_one({'date': yesterday}) is None:
+                r = requests.get(
+                    f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{yesterday}.csv')
+                if r.status_code == 200:
+                    decoded_content = r.content.decode('utf-8')
+                    cr = csv.DictReader(decoded_content.splitlines(), delimiter=',')
+                    corona.insert_one({'date': yesterday, 'info': list(cr)})
+                else:
+                    yesterday = None
+        if day and yesterday:
+            self.data = corona.find_one({'date': day})['info']
+            self.yesterday = corona.find_one({'date': yesterday})['info']
+        else:
+            self.data = []
+            self.yesterday = []
 
     def count_all(self, parametr):
         suma = reduce(lambda a, x: a + x, [int(i[parametr]) for i in self.data if i[parametr].isdigit()])
@@ -201,21 +226,37 @@ class AnalyseCSV:
         return top
 
     def compare_days(self, parametr='Active', compare=False):
-        countries = list(set([i['Country_Region'] for i in self.data]))
+        try:
+            self.data[-1]['Country_Region']
+            country_write = 'Country_Region'
+        except:
+            country_write = 'Country/Region'
+
+        try:
+            self.yesterday[-1]['Country_Region']
+            country_write_prev = 'Country_Region'
+        except:
+            country_write_prev = 'Country/Region'
+
+        try:
+            self.data[-1]['Active']
+            self.yesterday[-1]['Active']
+        except:
+            parametr = 'Confirmed'
+
+        countries = list(set([i[country_write] for i in self.data]))
         current = [{
             'Country': i,
             'Parametr': reduce(lambda a, x: a + x, [int(c[parametr])
                                                     for c in self.data
-                                                    if c[parametr].isdigit() and c['Country_Region'] == i], 0)
+                                                    if c[parametr].isdigit() and c[country_write] == i], 0)
         } for i in countries]
-
         previous = [{
             'Country': i,
             'Parametr': reduce(lambda a, x: a + x, [int(c[parametr])
                                                     for c in self.yesterday
-                                                    if c[parametr].isdigit() and c['Country_Region'] == i], 0)
+                                                    if c[parametr].isdigit() and c[country_write_prev] == i], 0)
         } for i in countries]
-
         if compare:
             comp = [{
                 'Country': c['Country'],
@@ -230,28 +271,54 @@ class AnalyseCSV:
 
 @mylogs
 def corona_world_dynamic(update: Update, context: CallbackContext):
-    corona_base = AnalyseCSV()
+    datte = update.message.text.split()
+    if len(datte) == 1:
+        corona_base = AnalyseCSV()
 
-    suma_active = reduce(lambda a, x: a + int(x['Parametr']), corona_base.compare_days('Active', compare=True), 0)
-    suma_death = reduce(lambda a, x: a + int(x['Parametr']), corona_base.compare_days('Deaths', compare=True), 0)
-    suma_recovered = reduce(lambda a, x: a + int(x['Parametr']), corona_base.compare_days('Recovered', compare=True), 0)
+        suma_active = reduce(lambda a, x: a + int(x['Parametr']), corona_base.compare_days('Active', compare=True), 0)
+        suma_death = reduce(lambda a, x: a + int(x['Parametr']), corona_base.compare_days('Deaths', compare=True), 0)
+        suma_recovered = reduce(lambda a, x: a + int(x['Parametr']),
+                                corona_base.compare_days('Recovered', compare=True), 0)
 
-    text = '''Мировая статистика за прошедшие сутки:
+        text = '''Мировая статистика за прошедшие сутки:
         Новых заражённых: {}
         Умерло: {}
         Выздоровело: {}'''.format(suma_active, suma_death, suma_recovered)
+    else:
+        active, data = data_stats(datte, comp=True)
+        death, data = data_stats(datte, par='Deaths', comp=True)
+        recover, data = data_stats(datte, par='Recovered', comp=True)
+        if isinstance(active, list):
+            suma_active = reduce(lambda a, x: a + int(x['Parametr']), active, 0)
+            suma_death = reduce(lambda a, x: a + int(x['Parametr']), death, 0)
+            suma_recovered = reduce(lambda a, x: a + int(x['Parametr']), recover, 0)
+
+            text = '''Мировая статистика за {}:
+            Новых заражённых: {}
+            Умерло: {}
+            Выздоровело: {}'''.format(data, suma_active, suma_death, suma_recovered)
+        else:
+            text = active
     update.message.reply_text(text)
     return text
 
 
 @mylogs
 def corona_stats_dynamic(update: Update, context: CallbackContext):
-    corona_base = AnalyseCSV()
-
-    text_list = [f'Страна: {i["Country"]} | Количество новых зараженных: {i["Parametr"]}'
-                 for i in corona_base.compare_days('Active', compare=True)][:5]
-
-    text = f'5 провинций с наибольшим числом новых заражённых ({TODAY})\n' + '\n'.join(text_list)
+    datte = update.message.text.split()
+    if len(datte) == 1:
+        corona_base = AnalyseCSV()
+        text_list = [f'Страна: {i["Country"]} | Количество новых зараженных: {i["Parametr"]}'
+                     for i in corona_base.compare_days('Active', compare=True)][:5]
+        text = f'5 провинций с наибольшим числом новых заражённых ({TODAY})\n' + '\n'.join(text_list)
+    else:
+        result, data = data_stats(datte, comp=True)
+        if isinstance(result, list):
+            text_list = [f'Страна: {i["Country"]} | Количество новых зараженных: {i["Parametr"]}'
+                         for i in result[:5]]
+            text = f'5 провинций с наибольшим числом новых заражённых ({data})\n' + '\n'.join(text_list)
+        else:
+            text = result
 
     update.message.reply_text(text)
     return text
@@ -259,17 +326,57 @@ def corona_stats_dynamic(update: Update, context: CallbackContext):
 
 @mylogs
 def corono_stats(update: Update, context: CallbackContext):
-    corona_data = AnalyseCSV()
-    corona_active = corona_data.compare_days('Active')[:]
-    corona_active.sort(key=lambda d: d['Parametr'], reverse=True)
+    datte = update.message.text.split()
 
-    text_list = [f'Страна: {i["Country"]} | Число зараженных: {i["Parametr"]}'
-                 for i in corona_active][:5]
-
-    text = f'5 провинций с наибольшим числом заражённых ({TODAY})\n' + '\n'.join(text_list)
-
+    if len(datte) == 1:
+        corona_data = AnalyseCSV()
+        corona_active = corona_data.compare_days('Active')[:]
+        corona_active.sort(key=lambda d: d['Parametr'], reverse=True)
+        text_list = [f'Страна: {i["Country"]} | Число зараженных: {i["Parametr"]}'
+                     for i in corona_active][:5]
+        text = f'5 провинций с наибольшим числом заражённых ({TODAY})\n' + '\n'.join(text_list)
+    else:
+        result, data = data_stats(datte)
+        if isinstance(result, list):
+            result.sort(key=lambda d: d['Parametr'], reverse=True)
+            text_list = [f'Страна: {i["Country"]} | Число зараженных: {i["Parametr"]}' for i in result[:5]]
+            text = f'5 провинций с наибольшим числом заражённых ({data})\n' + '\n'.join(text_list)
+        else:
+            text = result
     update.message.reply_text(text)
     return text
+
+
+def data_stats(datte, par='Active', comp=False):
+    match = re.fullmatch(r'(?:(?:[1-9]|[0-2]\d|3[01])\W(?:0?[1-9]|1[0-2]))|(?:(?:0?[1-9]|1[0-2])\W(?:[1-9]|[0-2]\d|3[01]))\W?(?:2019|2020)?$', datte[-1])
+    if not match:
+        result = 'Неверная дата'
+        data = None
+    else:
+        data = match.group()
+        day = re.split(r'\W', data)
+        if len(day) != 3:
+            day.append('2020')
+        try:
+            days = [
+                date(int(day[-1]), int(day[0]), int(day[1])).strftime("%m-%d-%Y"),
+                date(int(day[-1]), int(day[1]), int(day[0])).strftime("%m-%d-%Y")
+            ]
+            yests = [
+                date(int(day[-1]), (int(day[0]) - 1), int(day[1])).strftime("%m-%d-%Y"),
+                date(int(day[-1]), int(day[1]), (int(day[0]) - 1)).strftime("%m-%d-%Y")
+            ]
+        except:
+            days = [date(int(day[-1]), int(day[1]), int(day[0])).strftime("%m-%d-%Y")]
+            yests = [date(int(day[-1]), int(day[1]), (int(day[0]) - 1)).strftime("%m-%d-%Y")]
+        for i in range(len(days)):
+            corona = AnalyseCSV(days[i-1], yests[i-1])
+            result = corona.compare_days(par, compare=comp)[:]
+            if len(result):
+                break
+        else:
+            result = 'Нет данных за эту дату'
+    return result, data
 
 
 def history(update: Update, context: CallbackContext):
@@ -284,7 +391,7 @@ def history(update: Update, context: CallbackContext):
         n = len_base
         text = f'Ваши последние {n} сообщения:\n'
     else:
-        text = f'Ваши последние 5 сообщений:\n'
+        text = 'Ваши последние 5 сообщений:\n'
     t = 1
     for user in collection.find({'user': update.effective_user.first_name}).sort('time', -1).limit(5):
         output = str(t) + '. ' + user['message'] + '\n'
@@ -304,17 +411,20 @@ def remove(update: Update, context: CallbackContext):
 def chat_help(update: Update, context: CallbackContext):
     """Send a message when the command /help is issued."""
     update.message.reply_text('''Список команд доступных для вас:
-    1. /start - Начало работы с ботом
-    2. /history - Вывод ваших последний сообщений
-    3. /remove - Отчистка ваших сообщение для бота
-    4. /myid - Вывод вашего id
-    5. /fortune - Шар судьбы, ответ на любой ваш вопрос
-    6. /fact - Самый популярный факт с сайта cat-fact
-    7. /randomfact - Рандомный факт с сайта cat-fact
-    8. /breakfast - Подсказка, что приготовить на завтрак сегодня
-    9. /corono_stats - Актуальная (или почти) информация о 5 странах с наибольших количетсвом заражённых коронавирусом
-    10. /corona_stats_dynamic - Наибольшее число новых зараженных
-    11. /corona_world_stats_dynamic - Мировая статистика за прошедшие сутки''')
+    1. /start – Начало работы с ботом
+    2. /history – Вывод ваших последний сообщений
+    3. /remove – Отчистка ваших сообщение для бота
+    4. /myid – Вывод вашего id
+    5. /fortune – Шар судьбы, ответ на любой ваш вопрос
+    6. /fact – Самый популярный факт с сайта cat-fact
+    7. /randomfact – Рандомный факт с сайта cat-fact
+    8. /breakfast – Подсказка, что приготовить на завтрак сегодня
+    9. /corono_stats – Актуальная (или почти) информация о 5 странах с наибольшим количетсвом заражённых коронавирусом
+    10. /corono_stats <дата> – Информация о 5 странах с наибольшим количетсвом заражённых коронавирусом за эту дату
+    11. /corona_stats_dynamic – Информация о 5 странах с наибольшим числом новых заражённых
+    12. /corona_stats_dynamic <дата> – Информация о 5 странах с наибольшим числом новых заражённых за эту дату
+    13. /corona_world_stats_dynamic – Мировая статистика за прошедшие сутки
+    14. /corona_world_stats_dynamic <дата> – Мировая статистика за введённую дату''')
 
 
 @mylogs
@@ -350,8 +460,8 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('fortune', fortune))
     updater.dispatcher.add_handler(CommandHandler('fact', fact))
     updater.dispatcher.add_handler(CommandHandler('randomfact', random_fact))
-    updater.dispatcher.add_handler(CommandHandler('corono_stats', corono_stats))
     updater.dispatcher.add_handler(CommandHandler('breakfast', breakfast))
+    updater.dispatcher.add_handler(CommandHandler('corono_stats', corono_stats))
     updater.dispatcher.add_handler(CommandHandler('corona_stats_dynamic', corona_stats_dynamic))
     updater.dispatcher.add_handler(CommandHandler('corona_world_stats_dynamic', corona_world_dynamic))
 
