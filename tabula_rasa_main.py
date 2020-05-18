@@ -8,6 +8,7 @@ import requests
 import csv
 import pymongo
 import re
+import random
 
 from setup import PROXY, TOKEN
 from telegram import Bot, Update
@@ -135,6 +136,92 @@ def breakfast(update: Update, context: CallbackContext):
     update.message.reply_text(text)
     return text
 
+@mylogs
+def snacks(update: Update, context: CallbackContext):
+    update.message.reply_text(
+        '''Проголодался и хочется чего-то необычного, но при этом простого? \n Давай узнаем, какой перекус подойдет именно тебе!''')
+    list_names = ["яичные блинчики с начинкой", "буррито в банке", "запеченные помидоры с сыром", "роллы из кабачков", "банановые кексы", "мини-пиццы с курицей"]
+    ingredients = {"яичные блинчики с начинкой" : "2 яйца;\nсоль — по вкусу;\nприправы — по вкусу;\n50 г варёной индейки;\n50 г греческого йогурта;\n50 сыра;\n1 чайная ложка растительного масла.",
+                   "буррито в банке" : "1 помидор;\n1 зубчик чеснока;\n1 ломтик лимона;\n1 чайная ложка растительного масла;\n100 г консервированной фасоли;\n60 г нежирного сыра;\n2 столовые ложки греческого йогурта.",
+                   "запеченные помидоры с сыром" : "3 помидора;\n100 г сыра;\n2 столовые ложки оливкового масла;\nсоль — по вкусу;\nперец — по вкусу.",
+                   "роллы из кабачков" : "2 средних кабачка — обычных или цукини;\n1 столовая ложка оливкового масла;\n3 столовые ложки греческого йогурта;\n150 г варёной куриной грудки;\n100 г феты;\n½ луковицы;\n½ красного перца;\nсоль — по вкусу.",
+                   "банановые кексы" : "180 г овсянки крупного помола;\n1 чайная ложка разрыхлителя;\n1 чайная ложка корицы;\n2 спелых банана;\n2 яичных белка;\n1 стакан молока.",
+                   "мини-пиццы с курицей" : "4 тортильи;\n400 г варёной куриной грудки;\n150 г шпината;\n100 г творога;\n60 г тёртого твёрдого сыра;\n3 столовые ложки кетчупа;\n100 г моцареллы; \n1 столовая ложка растительного масла."}
+    recipes = {"яичные блинчики с начинкой" : """Взбейте в миске одно яйцо с солью и специями. Разогрейте сковороду, смажьте маслом, вылейте яйцо и распределите его по дну тонким слоем. Через 30 секунд переверните блинчик и готовьте ещё полминуты. Повторите манипуляции со вторым яйцом.
+Дайте блинчикам немного остыть, смажьте йогуртом. Нарежьте индейку и сыр тонкими пластинками, выложите в центр яичного круга, сверните блинчик.""",
+               "буррито в банке" : """Помидор ошпарьте кипятком, снимите с него кожицу, нарубите на мелкие кусочки или измельчите блендером. Добавьте в томатную массу чеснок, лимонный сок и растительное масло. Выложите соус в стеклянную банку нижним слоем. Сверху положите фасоль, затем тёртый сыр. Верхний слой — греческий йогурт.""",
+               "запеченные помидоры с сыром" : """Помойте помидоры, разрежьте их пополам, выложите на противень срезом вверх. Смажьте оливковым маслом, посолите, поперчите и посыпьте тёртым сыром. Запекайте при температуре 200 градусов 15–20 минут.""",
+               "роллы из кабачков" : """Кабачки нарежьте на тонкие пластины, посолите, смажьте с обеих сторон маслом и обжарьте до готовности, затем дайте остыть. Луковицу и перец мелко нарубите, курицу нарежьте ломтиками.
+Пластину кабачка с одной стороны смажьте йогуртом, выложите на него курицу, перец, лук. Сверните полоску в рулет и выложите на тарелку швом вниз.""",
+               "банановые кексы" : """Измельчите бананы в пюре. Смешайте овсянку, разрыхлитель и корицу. Добавьте остальные ингредиенты. Выложите массу в формочки для кексов. Выпекайте 30 минут при температуре 180 градусов. Прежде чем доставать готовые изделия, дайте им остыть около 10 минут, иначе они могут рассыпаться.""",
+               "мини-пиццы с курицей" : """Нарежьте курицу и моцареллу небольшими кусочками, смешайте их с творогом, твёрдым сыром, кетчупом, шпинатом.
+Смажьте формочки для кексов растительным маслом. Вырежьте из тортильи небольшие кружочки диаметром чуть больше формочек для кексов. Полученные кружки разместите так, чтобы сформировать дно и бортики будущих пицц. Заполните их начинкой. Выпекайте мини-пиццы около 20 минут при температуре в 220 градусов."""}
+    random_one = random.choice(list_names)
+    update.message.reply_text(f'Кажется, твой перекус на сегодня - это...')
+    for i in [3, 2, 1]:
+        update.message.reply_text(f"...{i}...")
+        time.sleep(1)
+    update.message.reply_text(f'...{random_one.lower()}!')
+    text = f'Для приготовления такого блюда как {random_one.lower()} тебе понадобятся:\n{ingredients[random_one]}\n'
+    update.message.reply_text(text)
+    text = f'Подробный рецепт: {recipes[random_one]} \nУдачи и приятного аппетита!'
+    update.message.reply_text(text)
+    return text  
+
+@mylogs
+def food(update: Update, context: CallbackContext):
+    update.message.reply_text("Сбалансированное питание, богатое микроэлементами - половина успеха!\nЧто ты хочешь приготовить?")
+    update.message.reply_text("/breakfast\n/lunch\n/dinner\n/snacks")
+@mylogs    
+def lofi(update: Update, context: CallbackContext):
+    update.message.reply_text("Ищешь музыку на фон?")
+    update.message.reply_text("Lo-fi - прекрасное решение!\nВыбери тот стиль, что тебе приятнее всего сейчас:")
+    update.message.reply_text("/chilledcow\n/jazzy_lofi\n/sad_lofi")
+
+@mylogs    
+def sad_lofi(update: Update, context: CallbackContext):
+    update.message.reply_text("Вот sleepy beats для тебя:")
+    update.message.reply_text("https://youtu.be/l7TxwBhtTUY")
+    update.message.reply_text("Удачи!")
+
+@mylogs
+def jazzy_lofi(update: Update, context: CallbackContext):
+    update.message.reply_text("Вот твой lo-fi с элементами джаза и хип-хопа:")
+    update.message.reply_text("https://youtu.be/5yx6BWlEVcY")
+    update.message.reply_text("Удачи!")
+
+@mylogs
+def chilledcow(update: Update, context: CallbackContext):
+    update.message.reply_text("Лови легендарный стрим Chilledcow:")
+    update.message.reply_text("https://youtu.be/5qap5aO4i9A")
+    update.message.reply_text("Удачи!")
+    
+@mylogs
+def funny_web(update: Update, context: CallbackContext):
+    update.message.reply_text("Чувствуешь усталость от серьезных занятий?\nЭто должно заставить тебя улыбнуться:")
+    urls = ["http://corndog.io/", "http://eelslap.com/", "https://hooooooooo.com/", "https://trypap.com/"]
+    update.message.reply_text(random.choice(urls))
+
+@mylogs
+def mood(update: Update, context: CallbackContext):
+    word = update.message.text.replace("/mood", "").strip()
+    sad = ["печал", "груст", "грущ", "тоск"]
+    happy = ["радост", 'счастл', "весел", "бодр"]
+    sad_songs = ["Bristol - Roads", "Regina Spector - Hero", "Kay PhiXips - Make Your Mind Up"]
+    happy_songs = ["OneRepublic - Everybody Loves Me", "Rihanna - Towards The Sun", "Triple H - 365 FRESH"]
+    recognition = 0
+    for i in sad:
+        if i in word:
+            update.message.reply_text("Ох, мне очень жаль, что ты себя так чувствуешь!")
+            update.message.reply_text(f"Как тебе вот такая песня: {random.choice(sad_songs)}?")
+            recognition = 1
+    for i in happy:
+        if i in word:
+            update.message.reply_text("Отличный настрой!")
+            update.message.reply_text(f"Мне очень нравится эта песня: {random.choice(happy_songs)}, а тебе?")
+            recognition = 1
+    if not recognition:
+        update.message.reply_text("Пожалуйста, вызови функцию еще раз, указав свое настроение!")
 
 @mylogs
 def fact(update: Update, context: CallbackContext):
@@ -434,7 +521,11 @@ def chat_help(update: Update, context: CallbackContext):
     11. /corona_stats_dynamic – Информация о 5 странах с наибольшим числом новых заражённых
     12. /corona_stats_dynamic <дата> – Информация о 5 странах с наибольшим числом новых заражённых за эту дату
     13. /corona_world_stats_dynamic – Мировая статистика за прошедшие сутки
-    14. /corona_world_stats_dynamic <дата> – Мировая статистика за введённую дату''')
+    14. /corona_world_stats_dynamic <дата> – Мировая статистика за введённую дату
+    15. /lofi
+    16. /funny_web
+    17. /mood
+    18. /food''')
 
 
 @mylogs
@@ -474,6 +565,14 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('corono_stats', corono_stats))
     updater.dispatcher.add_handler(CommandHandler('corona_stats_dynamic', corona_stats_dynamic))
     updater.dispatcher.add_handler(CommandHandler('corona_world_stats_dynamic', corona_world_dynamic))
+    updater.dispatcher.add_handler(CommandHandler('lofi', lofi))
+    updater.dispatcher.add_handler(CommandHandler('jazzy_lofi', jazzy_lofi))
+    updater.dispatcher.add_handler(CommandHandler('sad_lofi', sad_lofi))
+    updater.dispatcher.add_handler(CommandHandler('chilledcow', chilledcow))
+    updater.dispatcher.add_handler(CommandHandler('funny_web', funny_web))
+    updater.dispatcher.add_handler(CommandHandler('mood', mood))
+    updater.dispatcher.add_handler(CommandHandler('food', food))
+                         
 
     # on noncommand i.e message - echo the message on Telegramr
     updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
