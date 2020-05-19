@@ -88,7 +88,7 @@ def get_data_from_site(url: str) -> dict:
 @mylogs
 def start(update: Update, context: CallbackContext):
     """Send a message when the command /start is issued."""
-    text = f'Привет, {update.effective_user.first_name}!👋\nВведи команду /help, чтобы узнать что я умею.'
+    text = f'Привет, {update.effective_user.first_name}! 👋\nВведи команду /help, чтобы узнать что я умею.'
     update.message.reply_text(text)
     return text
 
@@ -96,13 +96,13 @@ def start(update: Update, context: CallbackContext):
 @mylogs
 def chat_help(update: Update, context: CallbackContext):
     """Send a message when the command /help is issued."""
-    update.message.reply_text('''Список команд доступных для вас:
+    update.message.reply_text('''Список доступных команд:
 Учёба:
 - /show_list - посмотреть и отредактировать свой список дел
 - /learn_text - выучить стих, текст или форму посредством заполнения пропусков
 - /lofi - знаменитый стрим фоновой музыки для работы
 - /corona - вся полезная информация о коронавирусе и его распространении
-     
+
 Отдых:
 - /cute - заряд мимишности от гифок с милыми животными
 - /get_clip - получи ссылку на видеоклип к любой песне
@@ -156,7 +156,7 @@ def get_picture(update: Update, context: CallbackContext):
 
 @mylogs
 def clip(update: Update, context: CallbackContext):
-    update.message.reply_text('На какую песню хотите найти клип?')
+    update.message.reply_text('На какую песню хочешь найти клип?')
     return 'clip'
 
 @mylogs
@@ -791,9 +791,9 @@ def check(update: Update, context: CallbackContext):
         else:
             mistake[word_ch] = word
     text = ''
-    text += 'Ваш результат: ' + str(correct) + '/' + str(len(poem_info['answers'])) + '\n'
+    text += 'Твой результат: ' + str(correct) + '/' + str(len(poem_info['answers'])) + '\n'
     if len(mistake):
-        text += 'Ваши ошибки: (ваш ответ - правильный ответ)' + '\n'
+        text += 'Твои ошибки: (ваш ответ - правильный ответ)' + '\n'
     for k, v in mistake.items():
         text += k + ' - ' + v + ' '
         _ = False
@@ -869,6 +869,7 @@ def enter_todo(update: Update, context: CallbackContext):
         update.message.reply_text('Очистить весь список?')
         return 'action'
     elif action == 'готово':
+        update.message.reply_text('Удачной работы!')
         return ConversationHandler.END
     elif action == 'достижения':
         if len(achievements):
@@ -923,23 +924,30 @@ def edit_list(update: Update, context: CallbackContext):
         update.message.reply_text(text)
 
     elif action == 'удалить':
-        if doing.isdigit():
+        if todo.isdigit():
             if len(todo_list):
-                achievements.append(todo_list[int(doing) - 1])
-                todo_list.pop(int(doing) - 1)
+                achievements.append(todo_list[int(todo) - 1])
+                if todo == '1':
+                    todo_list.pop()
+                else:
+                    todo_list.pop(int(todo) - 1)
             else:
                 update.message.reply_text('Твой список дел пока пуст')
-                return 'edit'
         else:
-            for ind, do in enumerate(do_list):
-                if doing in do:
-                    achievements.append(do_list[ind])
+            for ind, do in enumerate(todo_list):
+                if todo in do:
+                    achievements.append(todo_list[ind])
                     todo_list.pop(ind)
                     break
-        text = 'Твой список дел на данный момент:\n'
-        for i in range(len(todo_list)):
-            text += str(i + 1) + '. ' + todo_list[i] + '\n'
+        if len(todo_list):
+            text = 'Твой список дел на данный момент:\n'
+            for i in range(len(todo_list)):
+                text += str(i + 1) + '. ' + todo_list[i] + '\n'
+        else:
+            text = 'Твой список дел пока пуст\n'
         update.message.reply_text(text)
+        return 'edit'
+
 
     elif action == 'очистить':
         if todo.lower() == 'да':
