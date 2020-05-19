@@ -136,7 +136,7 @@ class TestCorona(unittest.TestCase):
                 {'Country': 'USA', 'Parametr': 7},
                 {'Country': 'Germany', 'Parametr': 15}]
             text = tabula_rasa_main.corono_stats(self.update, self.CallbackContext)
-        answer = '5 провинций с наибольшим числом заражённых (some date)\n' \
+        answer = '5 стран с наибольшим числом заражённых (some date)\n' \
                  'Страна: Germany | Число зараженных: 15\n' \
                  'Страна: USA | Число зараженных: 7\n' \
                  'Страна: Russia | Число зараженных: 5'
@@ -153,7 +153,7 @@ class TestCorona(unittest.TestCase):
                 {'Country': 'Russia', 'Parametr': 2}]
             text = tabula_rasa_main.corona_stats_dynamic(self.update, self.CallbackContext)
         self.assertEqual(text,
-                         '5 провинций с наибольшим числом новых заражённых (some date)\n'
+                         '5 стран с наибольшим числом новых заражённых (some date)\n'
                          'Страна: Germany | Количество новых зараженных: 14\n'
                          'Страна: USA | Количество новых зараженных: 5\n'
                          'Страна: Russia | Количество новых зараженных: 2')
@@ -194,7 +194,7 @@ class TestCoronaDate(unittest.TestCase):
                 {'Country': 'USA', 'Parametr': 7},
                 {'Country': 'Germany', 'Parametr': 15}]
             text = tabula_rasa_main.corono_stats(self.update, self.CallbackContext)
-        answer = '5 провинций с наибольшим числом заражённых (25-03)\n' \
+        answer = '5 стран с наибольшим числом заражённых (25-03)\n' \
                  'Страна: Germany | Число зараженных: 15\n' \
                  'Страна: USA | Число зараженных: 7\n' \
                  'Страна: Russia | Число зараженных: 5'
@@ -210,7 +210,7 @@ class TestCoronaDate(unittest.TestCase):
                 {'Country': 'Russia', 'Parametr': 2}]
             text = tabula_rasa_main.corona_stats_dynamic(self.update, self.CallbackContext)
         self.assertEqual(text,
-                         '5 провинций с наибольшим числом новых заражённых (25-03)\n'
+                         '5 стран с наибольшим числом новых заражённых (25-03)\n'
                          'Страна: Germany | Количество новых зараженных: 14\n'
                          'Страна: USA | Количество новых зараженных: 5\n'
                          'Страна: Russia | Количество новых зараженных: 2')
