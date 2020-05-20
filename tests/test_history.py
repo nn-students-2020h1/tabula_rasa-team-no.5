@@ -44,13 +44,13 @@ class TestHistory(unittest.TestCase):
     def test_one_message(self):
         db.history.insert_one(LOG_VALUE_1)
         reply_text = history(self.update, self.CallbackContext)
-        self.assertEqual(reply_text, 'Ваше последнее сообщение\n1. test message only\n')
+        self.assertEqual(reply_text, 'Твои последнее сообщение\n1. test message only\n')
 
     @patch('tabula_rasa_main.collection', db.history)
     def test_history(self):
         db.history.insert_many(LOG_VALUES_3)
         reply_text = history(self.update, self.CallbackContext)
-        self.assertEqual(reply_text, 'Ваши последние 3 сообщения:\n1. test message3\n'
+        self.assertEqual(reply_text, 'Твои последние 3 сообщения:\n1. test message3\n'
                                      '2. test message2\n3. test message1\n')
 
     @patch('tabula_rasa_main.collection', db.history)
@@ -58,7 +58,7 @@ class TestHistory(unittest.TestCase):
         db.history.insert_many(LOG_VALUE_MORE)
         reply_text = history(self.update, self.CallbackContext)
         self.assertEqual(reply_text,
-                         'Ваши последние 5 сообщений:\n1. test message6\n2. test message5\n'
+                         'Твои последние 5 сообщений:\n1. test message6\n2. test message5\n'
                          '3. test message4\n4. test message3\n5. test message2\n')
 
 

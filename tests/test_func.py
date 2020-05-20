@@ -31,7 +31,7 @@ class TestFunctions(unittest.TestCase):
     def test_start(self):
         self.update.effective_user.first_name = 'your name'
         self.assertEqual(tabula_rasa_main.start(self.update, self.CallbackContext),
-                         'Привет, your name!\nВведи команду /help, чтобы узнать что я умею.')
+                         'Привет, your name! 👋\nВведи команду /help, чтобы узнать что я умею.')
 
     @patch('tabula_rasa_main.collection', db.log)
     def test_id(self):
